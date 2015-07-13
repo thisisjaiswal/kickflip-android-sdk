@@ -104,29 +104,6 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         if (getArguments() != null) {
             mMediaUrl = getArguments().getString(ARG_URL);
             if (Kickflip.isKickflipUrl(Uri.parse(mMediaUrl))) {
-
-                Kickflip.getApiClient(getActivity(), true)
-                        .doOnNext(new Action1<KickflipApiClient>() {
-                            @Override
-                            public void call(KickflipApiClient kickflipApiClient) {
-                                mKickflip = kickflipApiClient;
-                            }
-                        })
-                        .flatMap(new Func1<KickflipApiClient, Observable<Stream>>() {
-                            @Override
-                            public Observable<Stream> call(KickflipApiClient kickflipApiClient) {
-                                String streamId = Kickflip.getStreamIdFromKickflipUrl(Uri.parse(mMediaUrl));
-                                return kickflipApiClient.getStreamInfo(streamId);
-                            }
-                        })
-                        .subscribe(new Action1<Stream>() {
-                            @Override
-                            public void call(Stream stream) {
-                                Log.i(TAG, "got kickflip stream meta: " + stream.getStreamUrl());
-                                mMediaUrl = stream.getStreamUrl();
-                                parseM3u8FromMediaUrl();
-                            }
-                        });
             } else if (mMediaUrl.substring(mMediaUrl.lastIndexOf(".") + 1).equals("m3u8")) {
                 parseM3u8FromMediaUrl();
             } else {

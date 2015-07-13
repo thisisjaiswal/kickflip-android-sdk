@@ -1,5 +1,7 @@
 package io.kickflip.sdk.av;
 
+import android.graphics.Bitmap;
+
 import java.io.IOException;
 
 import io.kickflip.sdk.view.GLCameraView;
@@ -40,6 +42,10 @@ public class AVRecorder {
 
     public void setPreviewDisplay(GLCameraView display){
         mCamEncoder.setPreviewDisplay(display);
+    }
+
+    public void overlay(Bitmap bitmap) {
+        mCamEncoder.overlay(bitmap);
     }
 
     public void applyFilter(int filter){

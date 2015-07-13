@@ -27,7 +27,7 @@
 
 
     <ImageButton
-        android:id="@+id/cameraFlipper"
+        android:id="@+id/cameraFlipper3"
         android:tag="camera"
         android:src="@drawable/camreverse_bg"
         android:alpha=".7"
@@ -39,6 +39,35 @@
         android:layout_marginTop="@dimen/status_bar_margin"
         android:layout_marginRight="10dp"
         android:layout_marginBottom="0dp"/>
+
+    <ImageButton
+        android:id="@+id/cameraFlipper2"
+        android:tag="camera"
+        android:src="@drawable/camreverse_bg"
+        android:alpha=".7"
+        android:background="@android:color/transparent"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="@dimen/status_bar_margin"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="0dp"/>
+
+    <ImageButton
+        android:id="@+id/cameraFlipper1"
+        android:tag="camera"
+        android:src="@drawable/camreverse_bg"
+        android:alpha=".7"
+        android:background="@android:color/transparent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="@dimen/status_bar_margin"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="0dp"/>
+
 
     <Button
         android:id="@+id/recordButton"

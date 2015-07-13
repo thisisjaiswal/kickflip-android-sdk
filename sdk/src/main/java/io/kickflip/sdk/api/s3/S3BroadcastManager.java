@@ -22,8 +22,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import io.kickflip.sdk.FileUtils;
+import io.kickflip.sdk.KickflipApplication;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.event.S3UploadEvent;
+import io.kickflip.sdk.model.BucketDone;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Manages a sequence of S3 uploads on behalf of
@@ -37,12 +42,13 @@ public class S3BroadcastManager implements Runnable {
     private TransferManager mTransferManager;
     private Broadcaster mBroadcaster;
     private Set<WeakReference<S3RequestInterceptor>> mInterceptors;
+    private String lid;
 
     public interface S3RequestInterceptor{
         public void interceptRequest(PutObjectRequest request);
     }
 
-    public S3BroadcastManager(Broadcaster broadcaster, AWSCredentials creds) {
+    public S3BroadcastManager(Broadcaster broadcaster, AWSCredentials creds, String lid) {
 
         // XXX - Need to determine what's going wrong with MD5 computation
         System.setProperty("com.amazonaws.services.s3.disableGetObjectMD5Validation", "true");
@@ -51,6 +57,7 @@ public class S3BroadcastManager implements Runnable {
         mBroadcaster = broadcaster;
         mQueue = new LinkedBlockingQueue<>();
         mInterceptors = new HashSet<>();
+        this.lid = lid;
         new Thread(this).start();
     }
 
@@ -73,7 +80,10 @@ public class S3BroadcastManager implements Runnable {
 
 
     public void queueUpload(final String bucket, final String key, final File file, boolean lastUpload) {
-        if (VERBOSE) Log.i(TAG, "Queueing upload " + key);
+        if (VERBOSE) {
+            Log.i(TAG, "is last upload: " + lastUpload);
+            Log.i(TAG, "Queueing upload " + key);
+        }
 
         final PutObjectRequest por = new PutObjectRequest(bucket, key, file);
         por.setGeneralProgressListener(new ProgressListener() {
@@ -125,6 +135,8 @@ public class S3BroadcastManager implements Runnable {
                         Log.i(TAG, "Upload complete.");
                     else if (VERBOSE)
                         Log.i(TAG, "Last Upload complete.");
+                    if (lastUploadComplete)
+                        hitDone();
                 } else {
                     if (VERBOSE)
                         Log.e(TAG, "Reached end of Queue before processing last segment!");
@@ -139,5 +151,19 @@ public class S3BroadcastManager implements Runnable {
             }
         }
         if (VERBOSE) Log.i(TAG, "Shutting down");
+    }
+
+    private void hitDone() {
+        KickflipApplication.instance().getKanvasService().finishStream(lid, new BucketDone(true), new Callback<Object>() {
+            @Override
+            public void success(Object o, Response response) {
+                Log.w(TAG, "done hit right!");
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.w(TAG, "error hitting done!");
+            }
+        });
     }
 }

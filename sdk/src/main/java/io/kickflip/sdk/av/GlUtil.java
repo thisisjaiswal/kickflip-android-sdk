@@ -204,18 +204,11 @@ public class GlUtil {
         return textures[0];
     }
 
-    public static int createTextureFromImage(Context context, int resId){
-        // Create an empty, mutable bitmap
-        Bitmap bitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888);
-        // get a canvas to paint over the bitmap
-        Canvas canvas = new Canvas(bitmap);
-        canvas.drawARGB(0,0,255,0);
+    public static int createTextureFromImage(Bitmap bitmap){
 
-        // get a background image from resources
-        // note the image format must match the bitmap format
-        Drawable background = context.getResources().getDrawable(resId);
-        background.setBounds(0, 0, 256, 256);
-        background.draw(canvas); // draw the background to our bitmap
+//        rotation is needed due to the camera rotation issue in portrait mode
+        Canvas canvas = new Canvas(bitmap);
+        canvas.rotate(-90, bitmap.getWidth()/2, bitmap.getHeight()/2);
 
         int[] textures = new int[1];
 

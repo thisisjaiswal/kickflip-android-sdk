@@ -27,6 +27,7 @@ import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.event.StreamLocationAddedEvent;
 import io.kickflip.sdk.location.DeviceLocation;
+import io.kickflip.sdk.model.BucketSession;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -39,13 +40,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p/>
  * <h2>Setup</h2>
  * Before use Kickflip must be setup with your Kickflip Client ID and Client Secret with
- * {@link #setup(android.content.Context, String, String, boolean)}. These tokens are available in your kickflip
- * account dashboard.
- * <h2>Example Usage</h2>
- * <b>Starting a single live broadcast</b>
- * <p/>
- * <ol>
- * <li>{@link #setup(android.content.Context, String, String, boolean)}</li>
  * <li>(Optional) {@link #setSessionConfig(io.kickflip.sdk.av.SessionConfig)}</li>
  * <li>{@link #startBroadcastActivity(android.app.Activity, io.kickflip.sdk.av.BroadcastListener)}</li>
  * </ol>
@@ -83,10 +77,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Kickflip {
     public static final String TAG = "Kickflip";
     private static Context sContext;
-    private static String sClientKey;
-    private static String sClientSecret;
-
-    private static KickflipApiClient sKickflip;
+    private static BucketSession sBucketSession;
 
     // Per-Stream settings
     private static SessionConfig sSessionConfig;          // Absolute path to root storage location
@@ -96,52 +87,23 @@ public class Kickflip {
      * Register with Kickflip, creating a single new user identity per app installation.
      *
      * @param context the host application's {@link android.content.Context}
-     * @param key     your Kickflip Client Key
-     * @param secret  your Kickflip Client Secret
-     * @param cb      A callback to be invoked with a {@link KickflipApiClient} initialized
-     *                with a user for this application-install. Use this client
-     *                to perform all Kickflip operations on behalf of the application user.
      */
-    public static void setup(@NonNull Context context,
-                             @NonNull String key,
-                             @NonNull String secret,
-                             boolean autoCreateUser,
-                             @Nullable KickflipCallback<KickflipApiClient> cb) {
+    public static void setup(@NonNull Context context) {
         sContext = context;
-        setApiCredentials(key, secret);
-        getApiClient(context, autoCreateUser, cb);
     }
 
-    /**
-     * Register with Kickflip, creating a new user identity per app installation.
-     *
-     * @param context the host application's {@link android.content.Context}
-     * @param key     your Kickflip Client Key
-     * @param secret  your Kickflip Client Secret
-     * @return an Observable for {@link KickflipApiClient} initialized
-     * with a user for this application-install. Use this client
-     * to perform all Kickflip operations on behalf of the application user.
-     */
-    public static Observable<KickflipApiClient> setup(@NonNull Context context,
-                                                      @NonNull String key,
-                                                      @NonNull String secret,
-                                                      boolean autoCreateUser) {
-        sContext = context;
-        setApiCredentials(key, secret);
-        return getApiClient(context, autoCreateUser);
+    public static void setBucketSession(BucketSession bucketSession) {
+        sBucketSession = bucketSession;
     }
 
-    private static void setApiCredentials(String key, String secret) {
-        sClientKey = key;
-        sClientSecret = secret;
+    public static BucketSession getBucketSession() {
+        return sBucketSession;
     }
 
     /**
      * Start {@link io.kickflip.sdk.activity.BroadcastActivity}. This Activity
      * facilitates control over a single live broadcast.
      * <p/>
-     * <b>Must be called after {@link Kickflip#setup(Context, String, String, boolean)} or
-     * {@link Kickflip#setup(Context, String, String, boolean, KickflipCallback)}.</b>
      *
      * @param host     the host {@link android.app.Activity} initiating this action
      * @param listener an optional {@link io.kickflip.sdk.av.BroadcastListener} to be notified on
@@ -149,11 +111,10 @@ public class Kickflip {
      */
     public static void startBroadcastActivity(Activity host, BroadcastListener listener) {
         checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
+        checkNotNull(sBucketSession);
         if (sSessionConfig == null) {
             setupDefaultSessionConfig();
         }
-        checkNotNull(sClientKey);
-        checkNotNull(sClientSecret);
         sBroadcastListener = listener;
         Intent broadcastIntent = new Intent(host, BroadcastActivity.class);
         broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -165,8 +126,6 @@ public class Kickflip {
         if (sSessionConfig == null) {
             setupDefaultSessionConfig();
         }
-        checkNotNull(sClientKey);
-        checkNotNull(sClientSecret);
         sBroadcastListener = listener;
         Log.i(TAG, "startGlassBA ready? " + readyToBroadcast());
         Intent broadcastIntent = new Intent(host, GlassBroadcastActivity.class);
@@ -178,8 +137,6 @@ public class Kickflip {
      * Start {@link io.kickflip.sdk.activity.MediaPlayerActivity}. This Activity
      * facilitates playing back a Kickflip broadcast.
      * <p/>
-     * <b>Must be called after {@link Kickflip#setup(Context, String, String, boolean)} or
-     * {@link Kickflip#setup(Context, String, String, boolean, KickflipCallback)}.</b>
      *
      * @param host      the host {@link android.app.Activity} initiating this action
      * @param streamUrl a path of format https://kickflip.io/<stream_id> or https://xxx.xxx/xxx.m3u8
@@ -245,24 +202,6 @@ public class Kickflip {
     }
 
     /**
-     * Get the provided Kickflip Client Key
-     *
-     * @return the provided Kickflip Client Key
-     */
-    public static String getApiKey() {
-        return sClientKey;
-    }
-
-    /**
-     * Get the provided Kickflip Client Secret
-     *
-     * @return the provided Kickflip Client Secret
-     */
-    public static String getApiSecret() {
-        return sClientSecret;
-    }
-
-    /**
      * Return the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
      *
      * @return the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
@@ -299,7 +238,7 @@ public class Kickflip {
      * @return true if credentials required for broadcast are provided. false otherwise
      */
     public static boolean readyToBroadcast() {
-        return sClientKey != null && sClientSecret != null && sSessionConfig != null;
+        return sSessionConfig != null && sBucketSession != null;
     }
 
     /**
@@ -326,72 +265,6 @@ public class Kickflip {
         return uri.getLastPathSegment().toString();
     }
 
-    /**
-     * Deprecated - you should cache the KickflipApiClient returned via
-     * {@link #setup(Context, String, String, boolean, KickflipCallback)} or
-     * {@link #setup(Context, String, String, boolean)}. I think this method
-     * is confusing because it doesn't guarantee that API keys are present.
-     *
-     * Create a new instance of the KickflipApiClient if one hasn't
-     * yet been created, or the provided API keys don't match
-     * the existing client.
-     *
-     * @param context the context of the host application
-     */
-    @Deprecated
-    public static Observable<KickflipApiClient> getApiClient(Context context, boolean autoCreateUser) {
-        checkNotNull(sClientKey);
-        checkNotNull(sClientSecret);
-        if (sKickflip == null || !sKickflip.getClientId().equals(sClientKey)) {
-            return KickflipApiClient.create(context, sClientKey, sClientSecret, autoCreateUser)
-                    .doOnNext(new Action1<KickflipApiClient>() {
-                        @Override
-                        public void call(KickflipApiClient kickflipApiClient) {
-                            sKickflip = kickflipApiClient;
-                            sClientKey = kickflipApiClient.getClientId();
-                            sClientSecret = kickflipApiClient.getClientSecret();
-                        }
-                    });
-        }
-
-        return Observable.just(sKickflip);
-    }
-
-    /**
-     * Deprecated - you should cache the KickflipApiClient returned via
-     * {@link #setup(Context, String, String, boolean, KickflipCallback)} or
-     * {@link #setup(Context, String, String, boolean)}. I think this method
-     * is confusing because it doesn't guarantee that API keys are present.
-     * Create a new instance of the KickflipApiClient if one hasn't
-     * yet been created, or the provided API keys don't match
-     * the existing client.
-     *
-     * @param context  the context of the host application
-     * @param callback an optional callback to be notified with the Kickflip user
-     *                 corresponding to the provided API keys.
-     */
-    @Deprecated
-    public static void getApiClient(@NonNull Context context, boolean autoCreateUser, final KickflipCallback<KickflipApiClient> callback) {
-        checkNotNull(sClientKey);
-        checkNotNull(sClientSecret);
-        if (sKickflip == null || !sKickflip.getClientId().equals(sClientKey)) {
-            KickflipApiClient.create(context, sClientKey, sClientSecret, autoCreateUser)
-                    .subscribeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Action1<KickflipApiClient>() {
-                        @Override
-                        public void call(KickflipApiClient kickflipApiClient) {
-                            sKickflip = kickflipApiClient;
-                            sClientKey = kickflipApiClient.getClientId();
-                            sClientSecret = kickflipApiClient.getClientSecret();
-                            if (callback != null)
-                                callback.onSuccess(kickflipApiClient);
-                        }
-                    });
-        } else if (callback != null) {
-            callback.onSuccess(sKickflip);
-        }
-    }
-
     private static void setupDefaultSessionConfig() {
         Log.i(TAG, "Setting default SessonConfig");
         checkNotNull(sContext);
@@ -400,7 +273,7 @@ public class Kickflip {
                 .withVideoBitrate(100 * 1000)
                 .withPrivateVisibility(false)
                 .withLocation(true)
-                .withVideoResolution(720, 480)
+                .withVideoResolution(480, 720)
                 .build());
     }
 

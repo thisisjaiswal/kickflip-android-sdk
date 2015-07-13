@@ -69,7 +69,7 @@ public class GlassBroadcastFragment extends Fragment {
         if (VERBOSE) Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         if (!Kickflip.readyToBroadcast()) {
-            Log.e(TAG, "Kickflip not properly prepared by BroadcastFragment's onCreate. SessionConfig: " + Kickflip.getSessionConfig() + " key " + Kickflip.getApiKey() + " secret " + Kickflip.getApiSecret());
+//            Log.e(TAG, "Kickflip not properly prepared by BroadcastFragment's onCreate. SessionConfig: " + Kickflip.getSessionConfig() + " key " + Kickflip.getApiKey() + " secret " + Kickflip.getApiSecret());
         } else {
             setupBroadcaster();
             mBroadcaster.startRecording();
@@ -79,7 +79,6 @@ public class GlassBroadcastFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         if (VERBOSE) Log.i(TAG, "onAttach");
     }
 
@@ -109,36 +108,25 @@ public class GlassBroadcastFragment extends Fragment {
                              Bundle savedInstanceState) {
         if (VERBOSE) Log.i(TAG, "onCreateView");
 
-        View root;
-        if (mBroadcaster != null && getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            root = inflater.inflate(R.layout.fragment_broadcast, container, false);
-            mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
-            mCameraView.setKeepScreenOn(true);
-            mLiveBanner = (TextView) root.findViewById(R.id.liveLabel);
-            mBroadcaster.setPreviewDisplay(mCameraView);
-            Button recordButton = (Button) root.findViewById(R.id.recordButton);
+        if (mBroadcaster != null) return new View(container.getContext());
 
-            // Hide views for glass
-            recordButton.setVisibility(View.GONE);
-            root.findViewById(R.id.filterSpinner).setVisibility(View.GONE);
-            root.findViewById(R.id.cameraFlipper).setVisibility(View.GONE);
-           // mLiveBanner.setOnClickListener(mShareButtonClickListener);
+        View root = inflater.inflate(R.layout.fragment_broadcast, container, false);
+        mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
+        mCameraView.setKeepScreenOn(true);
+        mLiveBanner = (TextView) root.findViewById(R.id.liveLabel);
+        mBroadcaster.setPreviewDisplay(mCameraView);
+        Button recordButton = (Button) root.findViewById(R.id.recordButton);
 
-            if (mBroadcaster.isLive()) {
-                setBannerToLiveState();
-                mLiveBanner.setVisibility(View.VISIBLE);
-            }
-            // This fragment begins recording immediately
-            // Assume we won't be background recording on Glass
-//            if (mBroadcaster.isRecording()) {
-//                recordButton.setBackgroundResource(R.drawable.red_dot_stop);
-//                if (!mBroadcaster.isLive()) {
-//                    setBannerToBufferingState();
-//                    mLiveBanner.setVisibility(View.VISIBLE);
-//                }
-//            }
-        } else
-            root = new View(container.getContext());
+        // Hide views for glass
+        recordButton.setVisibility(View.GONE);
+        root.findViewById(R.id.filterSpinner).setVisibility(View.GONE);
+//        root.findViewById(R.id.cameraFlipper).setVisibility(View.GONE);
+
+        if (mBroadcaster.isLive()) {
+            setBannerToLiveState();
+            mLiveBanner.setVisibility(View.VISIBLE);
+        }
+
         return root;
     }
 
@@ -150,23 +138,22 @@ public class GlassBroadcastFragment extends Fragment {
         // or even turn off the screen without interrupting the recording!
         // If you don't want this behavior, call stopRecording
         // on your Fragment/Activity's onStop()
-        if (getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            if (mBroadcaster == null) {
-                if (VERBOSE)
-                    Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getSessionConfig().getOutputPath() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
-                // TODO: Don't start recording until stream start response, so we can determine stream type...
-                Context context = getActivity().getApplicationContext();
-                try {
-                    mBroadcaster = new Broadcaster(context, Kickflip.getSessionConfig(), Kickflip.getApiKey(), Kickflip.getApiSecret());
-                    mBroadcaster.getEventBus().register(this);
-                    mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
-                    Kickflip.clearSessionConfig();
-                } catch (IOException e) {
-                    Log.e(TAG, "Unable to create Broadcaster. Could be trouble creating MediaCodec encoder.");
-                    e.printStackTrace();
-                }
 
-            }
+
+        if (mBroadcaster != null) return;
+
+//        if (VERBOSE)
+//            Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getSessionConfig().getOutputPath() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
+        // TODO: Don't start recording until stream start response, so we can determine stream type...
+        Context context = getActivity().getApplicationContext();
+        try {
+            mBroadcaster = new Broadcaster(context, Kickflip.getSessionConfig(), Kickflip.getBucketSession());
+            mBroadcaster.getEventBus().register(this);
+            mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
+            Kickflip.clearSessionConfig();
+        } catch (IOException e) {
+            Log.e(TAG, "Unable to create Broadcaster. Could be trouble creating MediaCodec encoder.");
+            e.printStackTrace();
         }
     }
 

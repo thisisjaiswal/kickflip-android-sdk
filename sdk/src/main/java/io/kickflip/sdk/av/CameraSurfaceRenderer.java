@@ -1,5 +1,6 @@
 package io.kickflip.sdk.av;
 
+import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
@@ -7,6 +8,9 @@ import android.view.MotionEvent;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
+import io.kickflip.sdk.KickflipApplication;
+import io.kickflip.sdk.R;
 
 /**
  * @hide
@@ -77,15 +81,15 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         mFullScreenCamera = new FullFrameRect(
                 new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
         // For texture overlay:
-        //GLES20.glEnable(GLES20.GL_BLEND);
-        //GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         mFullScreenOverlay = new FullFrameRect(
-                  new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D));
-        //mOverlayTextureId = GlUtil.createTextureWithTextContent("hello!");
-        //mOverlayTextureId = GlUtil.createTextureFromImage(mCameraView.getContext(), R.drawable.red_dot);
+                new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D));
+        mOverlayTextureId = -5;
         mCameraTextureId = mFullScreenCamera.createTextureObject();
 
         mCameraEncoder.onSurfaceCreated(mCameraTextureId);
+        mCameraEncoder.updateOverlay(mOverlayTextureId);
         mFrameCount = 0;
     }
 
@@ -123,8 +127,8 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
             mCameraEncoder.getSurfaceTextureForDisplay().updateTexImage();
             mCameraEncoder.getSurfaceTextureForDisplay().getTransformMatrix(mSTMatrix);
             //Drawing texture overlay:
-            mFullScreenOverlay.drawFrame(mOverlayTextureId, mSTMatrix);
             mFullScreenCamera.drawFrame(mCameraTextureId, mSTMatrix);
+            mFullScreenOverlay.drawFrame(mOverlayTextureId, mSTMatrix);
         }
         mFrameCount++;
     }
@@ -138,6 +142,11 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
      */
     public void changeFilterMode(int filter) {
         mNewFilter = filter;
+    }
+
+    public void overlay(Bitmap bitmap) {
+        mOverlayTextureId = GlUtil.createTextureFromImage(bitmap);
+        mCameraEncoder.updateOverlay(mOverlayTextureId);
     }
 
     public void handleTouchEvent(MotionEvent ev){

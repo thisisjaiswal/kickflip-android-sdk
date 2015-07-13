@@ -49,7 +49,7 @@ public class FullFrameRect {
 
     private boolean mCorrectVerticalVideo = false;
     private boolean mScaleToFit;
-    private SCREEN_ROTATION requestedOrientation = SCREEN_ROTATION.LANDSCAPE;
+    private SCREEN_ROTATION requestedOrientation = SCREEN_ROTATION.VERTICAL;
 
 
     /**
@@ -76,8 +76,7 @@ public class FullFrameRect {
             switch (orientation) {
                 case VERTICAL:
                     if (scaleToFit) {
-                        Matrix.rotateM(IDENTITY_MATRIX, 0, -90, 0f, 0f, 1f);
-                        Matrix.scaleM(IDENTITY_MATRIX, 0, 3.16f, 1.0f, 1f);
+                        Matrix.rotateM(IDENTITY_MATRIX, 0, 0f, 0f, 0f, 1f);
                     } else {
                         Matrix.scaleM(IDENTITY_MATRIX, 0, 0.316f, 1f, 1f);
                     }
@@ -137,9 +136,6 @@ public class FullFrameRect {
     public void drawFrame(int textureId, float[] texMatrix) {
         // Use the identity matrix for MVP so our 2x2 FULL_RECTANGLE covers the viewport.
         synchronized (mDrawLock) {
-            if (mCorrectVerticalVideo && !mScaleToFit && (requestedOrientation == SCREEN_ROTATION.VERTICAL || requestedOrientation == SCREEN_ROTATION.UPSIDEDOWN_VERTICAL)) {
-                Matrix.scaleM(texMatrix, 0, 0.316f, 1.0f, 1f);
-            }
             mProgram.draw(IDENTITY_MATRIX, mRectDrawable.getVertexArray(), 0,
                     mRectDrawable.getVertexCount(), mRectDrawable.getCoordsPerVertex(),
                     mRectDrawable.getVertexStride(),

@@ -8,3 +8,6 @@ gradle.properties
 .DS_Store
 
 .notes
+
+build
+sdk/src/main/res/values/private.xml

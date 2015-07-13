@@ -57,14 +57,14 @@ public class FFmpegWrapper {
      *
      */
     static public class AVOptions{
-        public int videoWidth = 1280;
-        public int videoHeight = 720;
+        public int videoWidth = 720;
+        public int videoHeight = 1280;
 
         public int audioSampleRate = 44100;
         public int numAudioChannels = 1;
 
         // Format specific options
-        public int hlsSegmentDurationSec = 10;
+        public int hlsSegmentDurationSec = 5;
 
         public String outputFormatName = "hls";
         // TODO: Provide a Map for format-specific options

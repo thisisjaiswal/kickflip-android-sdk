@@ -1,5 +1,6 @@
 package io.kickflip.sdk.av;
 
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
@@ -65,7 +66,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private WindowSurface mInputWindowSurface;
     private EglCore mEglCore;
     private FullFrameRect mFullScreen;
+    private FullFrameRect mFullScreenOverlay;
     private int mTextureId;
+    private int mOverlayTextureId;
     private int mFrameNum;
     private VideoEncoderCore mVideoEncoder;
     private Camera mCamera;
@@ -505,9 +508,12 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     mIncomingSizeUpdated = false;
                 }
 
-                surfaceTexture.getTransformMatrix(mTransform);
                 if (TRACE) Trace.beginSection("drawVEncoderFrame");
+
+                surfaceTexture.getTransformMatrix(mTransform);
                 mFullScreen.drawFrame(mTextureId, mTransform);
+                if (mOverlayTextureId != -5) mFullScreenOverlay.drawFrame(mOverlayTextureId, mTransform);
+
                 if (TRACE) Trace.endSection();
                 if (!mEncodedFirstFrame) {
                     mEncodedFirstFrame = true;
@@ -618,6 +624,14 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         }
     }
 
+    public void updateOverlay(int overlayId) {
+        this.mOverlayTextureId = overlayId;
+    }
+
+    public void overlay(Bitmap bitmap) {
+        mDisplayRenderer.overlay(bitmap);
+    }
+
     /**
      * Called on Encoder thread
      */
@@ -642,6 +656,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mTextureId = textureId;
                 mFullScreen = new FullFrameRect(
                         new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
+                GLES20.glEnable(GLES20.GL_BLEND);
+                GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+                mFullScreenOverlay = new FullFrameRect(
+                        new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D));
                 mFullScreen.getProgram().setTexSize(mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
                 GLES20.glViewport(0, 0, mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
                 mIncomingSizeUpdated = true;
@@ -706,6 +724,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         if (mFullScreen != null) mFullScreen.release();
         mFullScreen = new FullFrameRect(
                 new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        mFullScreenOverlay = new FullFrameRect(
+                new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D));
         mFullScreen.getProgram().setTexSize(width, height);
         GLES20.glViewport(0, 0, width, height);
         mIncomingSizeUpdated = true;
@@ -793,6 +815,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         }
 
         Camera.Parameters parms = mCamera.getParameters();
+        mCamera.setDisplayOrientation(90);
 
         postCameraOpenedEvent(parms);
 

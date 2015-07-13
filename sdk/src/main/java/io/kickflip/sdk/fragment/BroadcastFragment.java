@@ -68,67 +68,8 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
                 hideLiveBanner();
             } else {
                 mBroadcaster.startRecording();
-                //stopMonitoringOrientation();
                 v.setBackgroundResource(R.drawable.red_dot_stop);
             }
-        }
-    };
-
-    private SensorEventListener mOrientationListener = new SensorEventListener() {
-        final int SENSOR_CONFIRMATION_THRESHOLD = 5;
-        int[] confirmations = new int[2];
-        int orientation = -1;
-
-        @Override
-        public void onSensorChanged(SensorEvent event) {
-            if (getActivity() != null && getActivity().findViewById(R.id.rotateDeviceHint) != null) {
-                //Log.i(TAG, "Sensor " + event.values[1]);
-                if (event.values[1] > 10 || event.values[1] < -10) {
-                    // Sensor noise. Ignore.
-                } else if (event.values[1] < 5.5 && event.values[1] > -5.5) {
-                    // Landscape
-                    if (orientation != 1 && readingConfirmed(1)) {
-                        if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
-                            if (event.values[0] > 0) {
-                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.LANDSCAPE);
-                            } else {
-                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.UPSIDEDOWN_LANDSCAPE);
-                            }
-                        } else {
-                            getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.GONE);
-                        }
-                        orientation = 1;
-                    }
-                } else if (event.values[1] > 7.5 || event.values[1] < -7.5) {
-                    // Portrait
-                    if (orientation != 0 && readingConfirmed(0)) {
-                        if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
-                            if (event.values[1] > 0) {
-                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.VERTICAL);
-                            } else {
-                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.UPSIDEDOWN_VERTICAL);
-                            }
-                        } else {
-                            getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.VISIBLE);
-                        }
-                        orientation = 0;
-                    }
-                }
-            }
-        }
-
-        /**
-         * Determine if a sensor reading is trustworthy
-         * based on a series of consistent readings
-         */
-        private boolean readingConfirmed(int orientation) {
-            confirmations[orientation]++;
-            confirmations[orientation == 0 ? 1 : 0] = 0;
-            return confirmations[orientation] > SENSOR_CONFIRMATION_THRESHOLD;
-        }
-
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
         }
     };
 
@@ -161,17 +102,12 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     public void onCreate(Bundle savedInstanceState) {
         if (VERBOSE) Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
-        if (!Kickflip.readyToBroadcast()) {
-            Log.e(TAG, "Kickflip not properly prepared by BroadcastFragment's onCreate. SessionConfig: " + Kickflip.getSessionConfig() + " key " + Kickflip.getApiKey() + " secret " + Kickflip.getApiSecret());
-        } else {
-            setupBroadcaster();
-        }
+        if (Kickflip.readyToBroadcast()) setupBroadcaster();
     }
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         if (VERBOSE) Log.i(TAG, "onAttach");
     }
 
@@ -180,7 +116,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         super.onResume();
         if (mBroadcaster != null)
             mBroadcaster.onHostActivityResumed();
-        startMonitoringOrientation();
+//        startMonitoringOrientation();
     }
 
     @Override
@@ -188,7 +124,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         super.onPause();
         if (mBroadcaster != null)
             mBroadcaster.onHostActivityPaused();
-        stopMonitoringOrientation();
+//        stopMonitoringOrientation();
     }
 
     @Override
@@ -204,32 +140,33 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (VERBOSE) Log.i(TAG, "onCreateView");
 
         View root;
-        if (mBroadcaster != null && getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            root = inflater.inflate(R.layout.fragment_broadcast, container, false);
-            mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
-            mCameraView.setKeepScreenOn(true);
-            mLiveBanner = (TextView) root.findViewById(R.id.liveLabel);
-            mBroadcaster.setPreviewDisplay(mCameraView);
-            Button recordButton = (Button) root.findViewById(R.id.recordButton);
 
-            recordButton.setOnClickListener(mRecordButtonClickListener);
-            mLiveBanner.setOnClickListener(mShareButtonClickListener);
+        if (mBroadcaster == null) return new View(container.getContext());
 
-            if (mBroadcaster.isLive()) {
-                setBannerToLiveState();
+        root = inflater.inflate(R.layout.fragment_broadcast, container, false);
+        mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
+        mCameraView.setKeepScreenOn(true);
+        mLiveBanner = (TextView) root.findViewById(R.id.liveLabel);
+        mBroadcaster.setPreviewDisplay(mCameraView);
+        Button recordButton = (Button) root.findViewById(R.id.recordButton);
+
+        recordButton.setOnClickListener(mRecordButtonClickListener);
+        mLiveBanner.setOnClickListener(mShareButtonClickListener);
+
+        if (mBroadcaster.isLive()) {
+            setBannerToLiveState();
+            mLiveBanner.setVisibility(View.VISIBLE);
+        }
+        if (mBroadcaster.isRecording()) {
+            recordButton.setBackgroundResource(R.drawable.red_dot_stop);
+            if (!mBroadcaster.isLive()) {
+                setBannerToBufferingState();
                 mLiveBanner.setVisibility(View.VISIBLE);
             }
-            if (mBroadcaster.isRecording()) {
-                recordButton.setBackgroundResource(R.drawable.red_dot_stop);
-                if (!mBroadcaster.isLive()) {
-                    setBannerToBufferingState();
-                    mLiveBanner.setVisibility(View.VISIBLE);
-                }
-            }
-            setupFilterSpinner(root);
-            setupCameraFlipper(root);
-        } else
-            root = new View(container.getContext());
+        }
+        setupFilterSpinner(root);
+        setupCameraFlipper(root);
+
         return root;
     }
 
@@ -240,23 +177,19 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         // or even turn off the screen without interrupting the recording!
         // If you don't want this behavior, call stopRecording
         // on your Fragment/Activity's onStop()
-        if (getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            if (mBroadcaster == null) {
-                if (VERBOSE)
-                    Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getSessionConfig().getOutputPath() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
-                // TODO: Don't start recording until stream start response, so we can determine stream type...
-                Context context = getActivity().getApplicationContext();
-                try {
-                    mBroadcaster = new Broadcaster(context, Kickflip.getSessionConfig(), Kickflip.getApiKey(), Kickflip.getApiSecret());
-                    mBroadcaster.getEventBus().register(this);
-                    mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
-                    Kickflip.clearSessionConfig();
-                } catch (IOException e) {
-                    Log.e(TAG, "Unable to create Broadcaster. Could be trouble creating MediaCodec encoder.");
-                    e.printStackTrace();
-                }
 
-            }
+        if (mBroadcaster != null) return;
+
+        // TODO: Don't start recording until stream start response, so we can determine stream type...
+        Context context = getActivity().getApplicationContext();
+        try {
+            mBroadcaster = new Broadcaster(context, Kickflip.getSessionConfig(), Kickflip.getBucketSession());
+            mBroadcaster.getEventBus().register(this);
+            mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
+            Kickflip.clearSessionConfig();
+        } catch (IOException e) {
+            Log.e(TAG, "Unable to create Broadcaster. Could be trouble creating MediaCodec encoder.");
+            e.printStackTrace();
         }
     }
 
@@ -271,17 +204,28 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     }
 
     private void setupCameraFlipper(View root) {
-        View flipper = root.findViewById(R.id.cameraFlipper);
-        if (Camera.getNumberOfCameras() == 1) {
-            flipper.setVisibility(View.GONE);
-        } else {
-            flipper.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mBroadcaster.requestOtherCamera();
-                }
-            });
-        }
+        View flipper1 = root.findViewById(R.id.cameraFlipper1);
+        View flipper2 = root.findViewById(R.id.cameraFlipper2);
+        View flipper3 = root.findViewById(R.id.cameraFlipper3);
+
+        flipper1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBroadcaster.applyFilter(0);
+            }
+        });
+        flipper2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBroadcaster.applyFilter(1);
+            }
+        });
+        flipper3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBroadcaster.applyFilter(7);
+            }
+        });
     }
 
     @Override
@@ -368,23 +312,6 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (mBroadcaster.isRecording()) {
             mBroadcaster.stopRecording();
             mBroadcaster.release();
-        }
-    }
-
-
-    protected void startMonitoringOrientation() {
-        if (getActivity() != null) {
-            SensorManager sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-            sensorManager.registerListener(mOrientationListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-        }
-    }
-
-    protected void stopMonitoringOrientation() {
-        if (getActivity() != null) {
-            View deviceHint = getActivity().findViewById(R.id.rotateDeviceHint);
-            if (deviceHint != null) deviceHint.setVisibility(View.GONE);
-            SensorManager sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-            sensorManager.unregisterListener(mOrientationListener);
         }
     }
 }

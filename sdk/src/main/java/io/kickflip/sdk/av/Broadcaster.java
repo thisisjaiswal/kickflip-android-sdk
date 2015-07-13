@@ -15,26 +15,25 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
 
-import io.kickflip.sdk.FileUtils;
 import io.kickflip.sdk.Kickflip;
-import io.kickflip.sdk.api.KickflipApiClient;
-import io.kickflip.sdk.api.KickflipCallback;
+import io.kickflip.sdk.KickflipApplication;
 import io.kickflip.sdk.api.json.HlsStream;
-import io.kickflip.sdk.api.json.Response;
-import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.api.json.User;
 import io.kickflip.sdk.api.s3.S3BroadcastManager;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
-import io.kickflip.sdk.event.BroadcastIsLiveEvent;
 import io.kickflip.sdk.event.HlsManifestWrittenEvent;
 import io.kickflip.sdk.event.HlsSegmentWrittenEvent;
 import io.kickflip.sdk.event.MuxerFinishedEvent;
 import io.kickflip.sdk.event.S3UploadEvent;
-import io.kickflip.sdk.event.StreamLocationAddedEvent;
 import io.kickflip.sdk.event.ThumbnailWrittenEvent;
-import io.kickflip.sdk.exception.KickflipException;
+import io.kickflip.sdk.model.BucketCredentials;
+import io.kickflip.sdk.model.BucketSession;
+import io.kickflip.sdk.model.BucketStart;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static io.kickflip.sdk.Kickflip.isKitKat;
 
 /**
@@ -60,9 +59,7 @@ public class Broadcaster extends AVRecorder {
     private static final String TAG = "Broadcaster";
     private static final boolean VERBOSE = false;
     private static final int MIN_BITRATE = 3 * 100 * 1000;              // 300 kbps
-    private final String VOD_FILENAME = "vod.m3u8";
     private Context mContext;
-    private KickflipApiClient mKickflip;
     private User mUser;
     private HlsStream mStream;
     private HlsFileObserver mFileObserver;
@@ -72,14 +69,15 @@ public class Broadcaster extends AVRecorder {
     private BroadcastListener mBroadcastListener;
     private EventBus mEventBus;
     private boolean mReadyToBroadcast;                                  // Kickflip user registered and endpoint ready
+    private boolean isRecording = false;
     private boolean mSentBroadcastLiveEvent;
     private int mVideoBitrate;
-    private File mManifestSnapshotDir;                                  // Directory where manifest snapshots are stored
-    private File mVodManifest;                                          // VOD HLS Manifest containing complete history
     private int mNumSegmentsWritten;
     private int mLastRealizedBandwidthBytesPerSec;                      // Bandwidth snapshot for adapting bitrate
     private boolean mDeleteAfterUploading;                              // Should recording files be deleted as they're uploaded?
     private ObjectMetadata mS3ManifestMeta;
+    private BucketSession bucketSession;
+    private BucketCredentials bucketCredentials;
 
 
     /**
@@ -87,22 +85,18 @@ public class Broadcaster extends AVRecorder {
      *
      * @param context       the host application {@link android.content.Context}.
      * @param config        the Session configuration. Specifies bitrates, resolution etc.
-     * @param CLIENT_ID     the Client ID available from your Kickflip.io dashboard.
-     * @param CLIENT_SECRET the Client Secret available from your Kickflip.io dashboard.
      */
-    public Broadcaster(Context context, SessionConfig config, String CLIENT_ID, String CLIENT_SECRET) throws IOException {
+    public Broadcaster(Context context, SessionConfig config, BucketSession bucketSession) throws IOException {
         super(config);
-        checkArgument(CLIENT_ID != null && CLIENT_SECRET != null);
+        checkNotNull(bucketSession);
         init();
         mContext = context;
         mConfig = config;
+        this.bucketSession = bucketSession;
+        this.bucketCredentials = bucketSession.getCred();
         mConfig.getMuxer().setEventBus(mEventBus);
         mVideoBitrate = mConfig.getVideoBitrate();
         if (VERBOSE) Log.i(TAG, "Initial video bitrate : " + mVideoBitrate);
-        mManifestSnapshotDir = new File(mConfig.getOutputPath().substring(0, mConfig.getOutputPath().lastIndexOf("/") + 1), "m3u8");
-        mManifestSnapshotDir.mkdir();
-        mVodManifest = new File(mManifestSnapshotDir, VOD_FILENAME);
-        writeEventManifestHeader(mConfig.getHlsSegmentDuration());
 
         String watchDir = config.getOutputDirectory().getAbsolutePath();
         mFileObserver = new HlsFileObserver(watchDir, mEventBus);
@@ -110,21 +104,7 @@ public class Broadcaster extends AVRecorder {
         if (VERBOSE) Log.i(TAG, "Watching " + watchDir);
 
         mReadyToBroadcast = false;
-        Kickflip.setup(context, CLIENT_ID, CLIENT_SECRET, true, new KickflipCallback<KickflipApiClient>() {
-            @Override
-            public void onSuccess(KickflipApiClient client) {
-                mKickflip = client;
-                mUser = client.getActiveUser();
-                if (VERBOSE) Log.i(TAG, "Got storage credentials " + mUser);
-            }
-
-            @Override
-            public void onError(KickflipException error) {
-                Log.e(TAG, "Failed to get storage credentials" + error.toString());
-                if (mBroadcastListener != null)
-                    mBroadcastListener.onBroadcastError(error);
-            }
-        });
+        Kickflip.setup(context);
     }
 
     private void init() {
@@ -182,42 +162,34 @@ public class Broadcaster extends AVRecorder {
      */
     @Override
     public void startRecording() {
-        if (mKickflip == null) {
-            Log.e(TAG, "Start recording requested before Kickflip api client available! Ignoring request");
-            return;
-        }
-
         super.startRecording();
-        mKickflip.startStream(mConfig.getStream(), new KickflipCallback<Stream>() {
+        isRecording = true;
+        mCamEncoder.requestThumbnailOnDeltaFrameWithScaling(10, 1);
+        Log.i(TAG, "got StartStreamResponse");
+        onGotStreamResponse(null);
+        KickflipApplication.instance().getKanvasService().startStream(bucketSession.getLid(), new BucketStart(true), new Callback<Object>() {
             @Override
-            public void onSuccess(Stream stream) {
-                mCamEncoder.requestThumbnailOnDeltaFrameWithScaling(10, 1);
-                Log.i(TAG, "got StartStreamResponse");
-                checkArgument(stream instanceof HlsStream, "Got unexpected StartStream Response");
-                //noinspection ConstantConditions
-                onGotStreamResponse((HlsStream) stream);
+            public void success(Object o, Response response) {
+                Log.w(TAG, "started stream!");
             }
 
             @Override
-            public void onError(KickflipException error) {
-                Log.w(TAG, "Error getting start stream response! " + error);
+            public void failure(RetrofitError error) {
+
             }
         });
     }
 
     private void onGotStreamResponse(HlsStream stream) {
-        mStream = stream;
-        if (mConfig.shouldAttachLocation()) {
-            Kickflip.addLocationToStream(mContext, mStream, mEventBus);
-        }
-        mStream.setTitle(mConfig.getTitle());
-        mStream.setDescription(mConfig.getDescription());
-        mStream.setExtraInfo(mConfig.getExtraInfo());
-        mStream.setIsPrivate(mConfig.isPrivate());
+        mConfig.getStream().setTitle(mConfig.getTitle());
+        mConfig.getStream().setDescription(mConfig.getDescription());
+        mConfig.getStream().setExtraInfo(mConfig.getExtraInfo());
+        mConfig.getStream().setIsPrivate(mConfig.isPrivate());
+
         if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
         mS3Manager = new S3BroadcastManager(this,
-                new BasicSessionCredentials(mStream.getAwsKey(), mStream.getAwsSecret(), mStream.getToken()));
-        mS3Manager.setRegion(mStream.getRegion());
+                new BasicSessionCredentials(bucketCredentials.getAccessKey(), bucketCredentials.getSecretKey(), bucketCredentials.getSessionToken()), bucketSession.getLid());
+        mS3Manager.setRegion(bucketSession.getRegion());
         mS3Manager.addRequestInterceptor(mS3RequestInterceptor);
         mReadyToBroadcast = true;
         submitQueuedUploadsToS3();
@@ -244,20 +216,6 @@ public class Broadcaster extends AVRecorder {
     public void stopRecording() {
         super.stopRecording();
         mSentBroadcastLiveEvent = false;
-        if (mStream != null) {
-            if (VERBOSE) Log.i(TAG, "Stopping Stream");
-            mKickflip.stopStream(mStream, new KickflipCallback<Stream>() {
-                @Override
-                public void onSuccess(Stream stream) {
-                    if (VERBOSE) Log.i(TAG, "Got stop stream response " + stream);
-                }
-
-                @Override
-                public void onError(KickflipException error) {
-                    Log.w(TAG, "Error getting stop stream response! " + error);
-                }
-            });
-        }
     }
 
     /**
@@ -350,22 +308,6 @@ public class Broadcaster extends AVRecorder {
             }
         }
         if (VERBOSE) Log.i(TAG, "onManifestUpdated. Last segment? " + !isRecording());
-        // Copy m3u8 at this moment and queue it to uploading
-        // service
-        final File copy = new File(mManifestSnapshotDir, e.getManifestFile().getName()
-                .replace(".m3u8", "_" + mNumSegmentsWritten + ".m3u8"));
-        try {
-            if (VERBOSE)
-                Log.i(TAG, "Copying " + e.getManifestFile().getAbsolutePath() + " to " + copy.getAbsolutePath());
-            FileUtils.copy(e.getManifestFile(), copy);
-            queueOrSubmitUpload(keyForFilename("index.m3u8"), copy);
-            appendLastManifestEntryToEventManifest(copy, !isRecording());
-        } catch (IOException e1) {
-            Log.e(TAG, "Failed to copy manifest file. Upload of this manifest cannot proceed. Stream will have a discontinuity!");
-            e1.printStackTrace();
-        }
-
-        mNumSegmentsWritten++;
     }
 
     /**
@@ -374,22 +316,7 @@ public class Broadcaster extends AVRecorder {
      * Called on a background thread
      */
     private void onManifestUploaded(S3UploadEvent uploadEvent) {
-        if (mDeleteAfterUploading) {
-            if (VERBOSE) Log.i(TAG, "Deleting " + uploadEvent.getFile().getAbsolutePath());
-            uploadEvent.getFile().delete();
-            String uploadUrl = uploadEvent.getDestinationUrl();
-            if (uploadUrl.substring(uploadUrl.lastIndexOf(File.separator) + 1).equals("vod.m3u8")) {
-                if (VERBOSE) Log.i(TAG, "Deleting " + mConfig.getOutputDirectory());
-                mFileObserver.stopWatching();
-                FileUtils.deleteDirectory(mConfig.getOutputDirectory());
-            }
-        }
-        if (!mSentBroadcastLiveEvent) {
-            mEventBus.post(new BroadcastIsLiveEvent(((HlsStream) mStream).getKickflipUrl()));
-            mSentBroadcastLiveEvent = true;
-            if (mBroadcastListener != null)
-                mBroadcastListener.onBroadcastLive(mStream);
-        }
+        Log.w("KICKFLIP", "Time to panic. Should not have uploaded the manifest.");
     }
 
     /**
@@ -414,15 +341,7 @@ public class Broadcaster extends AVRecorder {
      */
     private void onThumbnailUploaded(S3UploadEvent uploadEvent) {
         if (mDeleteAfterUploading) uploadEvent.getFile().delete();
-        if (mStream != null) {
-            mStream.setThumbnailUrl(uploadEvent.getDestinationUrl());
-            sendStreamMetaData();
-        }
-    }
-
-    @Subscribe
-    public void onStreamLocationAdded(StreamLocationAddedEvent event) {
-        sendStreamMetaData();
+        Log.w("KICKFLIP", "thumbnail uploaded");
     }
 
     @Subscribe
@@ -439,18 +358,11 @@ public class Broadcaster extends AVRecorder {
         // bg recording
     }
 
-    private void sendStreamMetaData() {
-        if (mStream != null) {
-            mKickflip.setStreamInfo(mStream, null);
-        }
-    }
-
     /**
      * Construct an S3 Key for a given filename
-     *
      */
     private String keyForFilename(String fileName) {
-        return mStream.getAwsS3Prefix() + fileName;
+        return fileName;
     }
 
     /**
@@ -496,7 +408,8 @@ public class Broadcaster extends AVRecorder {
     }
 
     private void submitUpload(final String key, final File file, boolean lastUpload) {
-        mS3Manager.queueUpload(mStream.getAwsS3Bucket(), key, file, lastUpload);
+        String fname = key;
+        mS3Manager.queueUpload(bucketSession.getBucket(), bucketSession.getKey() + "/" + fname, file, lastUpload);
     }
 
     /**
@@ -517,26 +430,6 @@ public class Broadcaster extends AVRecorder {
 
     public SessionConfig getSessionConfig() {
         return mConfig;
-    }
-
-    private void writeEventManifestHeader(int targetDuration) {
-        FileUtils.writeStringToFile(
-                String.format("#EXTM3U\n" +
-                        "#EXT-X-PLAYLIST-TYPE:VOD\n" +
-                        "#EXT-X-VERSION:3\n" +
-                        "#EXT-X-MEDIA-SEQUENCE:0\n" +
-                        "#EXT-X-TARGETDURATION:%d\n", targetDuration + 1),
-                mVodManifest, false
-        );
-    }
-
-    private void appendLastManifestEntryToEventManifest(File sourceManifest, boolean lastEntry) {
-        String result = FileUtils.tail2(sourceManifest, lastEntry ? 3 : 2);
-        FileUtils.writeStringToFile(result, mVodManifest, true);
-        if (lastEntry) {
-            submitUpload(keyForFilename("vod.m3u8"), mVodManifest, true);
-            if (VERBOSE) Log.i(TAG, "Queued master manifest " + mVodManifest.getAbsolutePath());
-        }
     }
 
     S3BroadcastManager.S3RequestInterceptor mS3RequestInterceptor = new S3BroadcastManager.S3RequestInterceptor() {
