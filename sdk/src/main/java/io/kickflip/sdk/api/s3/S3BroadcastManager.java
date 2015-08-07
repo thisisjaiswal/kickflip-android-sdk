@@ -154,7 +154,7 @@ public class S3BroadcastManager implements Runnable {
     }
 
     private void hitDone() {
-        KickflipApplication.instance().getKanvasService().finishStream(lid, new BucketDone(true), new Callback<Object>() {
+        KickflipApplication.getKanvasService().finishStream(lid, new BucketDone(true), new Callback<Object>() {
             @Override
             public void success(Object o, Response response) {
                 Log.w(TAG, "done hit right!");

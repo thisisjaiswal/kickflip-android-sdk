@@ -111,8 +111,8 @@ public class GlassBroadcastFragment extends Fragment {
         if (mBroadcaster != null) return new View(container.getContext());
 
         View root = inflater.inflate(R.layout.fragment_broadcast, container, false);
-        mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
-        mCameraView.setKeepScreenOn(true);
+//        mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
+//        mCameraView.setKeepScreenOn(true);
         mLiveBanner = (TextView) root.findViewById(R.id.liveLabel);
         mBroadcaster.setPreviewDisplay(mCameraView);
         Button recordButton = (Button) root.findViewById(R.id.recordButton);

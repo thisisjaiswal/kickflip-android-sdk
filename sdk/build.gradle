@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+//apply plugin: 'com.jakewharton.hugo'
 apply plugin: 'com.jakewharton.hugo'
 //apply plugin: 'com.github.dcendents.android-maven'
 //apply plugin: 'com.jfrog.bintray'
@@ -60,6 +61,8 @@ dependencies {
     compile 'com.squareup.retrofit:retrofit:1.9.0'
     compile 'com.squareup.okhttp:okhttp:2.3.0'
     compile 'io.reactivex:rxandroid:0.24.0'
+
+    compile 'net.lingala.zip4j:zip4j:1.2.4'
 
     compile files('libs/m3u8parser-0.2.jar')
 

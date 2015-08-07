@@ -4,14 +4,8 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
-import android.hardware.Camera;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,10 +26,12 @@ import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
 import io.kickflip.sdk.Share;
 import io.kickflip.sdk.av.Broadcaster;
-import io.kickflip.sdk.av.FullFrameRect;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.event.BroadcastIsLiveEvent;
+import io.kickflip.sdk.glmagic.GLFrameLayout;
+import io.kickflip.sdk.view.CameraRendererView;
 import io.kickflip.sdk.view.GLCameraEncoderView;
+import io.kickflip.sdk.view.drawing.GLDrawingView;
 
 /**
  * This is a drop-in broadcasting fragment.
@@ -48,6 +44,10 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     private static BroadcastFragment mFragment;
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
     private GLCameraEncoderView mCameraView;
+    private CameraRendererView mCameraRendererView;
+    private GLSurfaceView mTextureUpdater;
+    private GLDrawingView mDrawingView;
+    private GLFrameLayout mGlFrameLayout;
     private TextView mLiveBanner;
 
     View.OnClickListener mShareButtonClickListener = new View.OnClickListener() {
@@ -129,9 +129,10 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
-        if (mBroadcaster != null && !mBroadcaster.isRecording())
+        if (mBroadcaster != null && !mBroadcaster.isRecording()) {
             mBroadcaster.release();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -144,10 +145,17 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (mBroadcaster == null) return new View(container.getContext());
 
         root = inflater.inflate(R.layout.fragment_broadcast, container, false);
+
         mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
         mCameraView.setKeepScreenOn(true);
+
         mLiveBanner = (TextView) root.findViewById(R.id.liveLabel);
         mBroadcaster.setPreviewDisplay(mCameraView);
+
+        mDrawingView = (GLDrawingView) root.findViewById(R.id.kanvas_overlay_drawing_view);
+        mDrawingView.setTextureDrawer(mBroadcaster.getRenderer());
+        mDrawingView.initialize();
+
         Button recordButton = (Button) root.findViewById(R.id.recordButton);
 
         recordButton.setOnClickListener(mRecordButtonClickListener);
@@ -204,28 +212,28 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     }
 
     private void setupCameraFlipper(View root) {
-        View flipper1 = root.findViewById(R.id.cameraFlipper1);
-        View flipper2 = root.findViewById(R.id.cameraFlipper2);
-        View flipper3 = root.findViewById(R.id.cameraFlipper3);
-
-        flipper1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mBroadcaster.applyFilter(0);
-            }
-        });
-        flipper2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mBroadcaster.applyFilter(1);
-            }
-        });
-        flipper3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mBroadcaster.applyFilter(7);
-            }
-        });
+//        View flipper1 = root.findViewById(R.id.cameraFlipper1);
+//        View flipper2 = root.findViewById(R.id.cameraFlipper2);
+//        View flipper3 = root.findViewById(R.id.cameraFlipper3);
+//
+//        flipper1.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mBroadcaster.applyFilter(0);
+//            }
+//        });
+//        flipper2.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mBroadcaster.applyFilter(1);
+//            }
+//        });
+//        flipper3.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mBroadcaster.applyFilter(7);
+//            }
+//        });
     }
 
     @Override
@@ -314,4 +322,16 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
             mBroadcaster.release();
         }
     }
+
+//    @Override
+//    public void onDrawingFinished() {
+////        Bitmap bitmap = mDrawingView.getBitmap();
+////        mBroadcaster.overlay(BitmapFactory.decodeResource(KickflipApplication.instance().getResources(), R.drawable.penguin));
+////        mBroadcaster.overlay(bitmap);
+//    }
+//
+//    @Override
+//    public void onDrawingStarted() {
+//    }
+
 }

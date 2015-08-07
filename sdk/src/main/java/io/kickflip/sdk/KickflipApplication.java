@@ -3,6 +3,7 @@ package io.kickflip.sdk;
 import android.app.Application;
 import android.content.Context;
 import android.content.res.Resources;
+import android.util.Log;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -14,13 +15,14 @@ import retrofit.converter.GsonConverter;
 
 public class KickflipApplication extends Application {
 
-    private String ENDPOINT_KANVAS;
+    private static boolean initialized = false;
+    private static Context mContext;
 
-    private KanvasService kanvasService;
+    private static String ENDPOINT_KANVAS;
 
-    private static KickflipApplication instance;
+    private static KanvasService kanvasService;
 
-    private void buildRestServices() {
+    private static void buildRestServices() {
         ENDPOINT_KANVAS = instance().getResources().getString(R.string.kanvas_api);
         Gson gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
@@ -34,18 +36,26 @@ public class KickflipApplication extends Application {
         kanvasService = kanvasAdapter.create(KanvasService.class);
     }
 
-    public static KickflipApplication instance() {
-        return instance;
+    public static Context instance() {
+        return mContext;
     }
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        instance = this;
+    public static void init(Context context) {
+        if (initialized) return;
+        initialized = true;
+        mContext = context;
         buildRestServices();
     }
 
-    public KanvasService getKanvasService() {
+//    @Override
+//    public void onCreate() {
+//        super.onCreate();
+//        Log.w("KICKFLIP", "kickflip application created");
+//        instance = this;
+//        buildRestServices();
+//    }
+
+    public static KanvasService getKanvasService() {
         return kanvasService;
     }
 }

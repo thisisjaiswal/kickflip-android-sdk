@@ -534,14 +534,20 @@ public class Texture2dProgram {
                      int vertexCount, int coordsPerVertex, int vertexStride,
                      float[] texMatrix, FloatBuffer texBuffer, int textureId, int texStride) {
         GlUtil.checkGlError("draw start");
+//        Log.d("GLDrawing texture", "" + textureId);
 
+//        Log.d("drawing texture", "" + textureId);
         // Select the program.
+//        Log.d("draw", "IS PROGRAM: " + GLES20.glIsProgram(mProgramHandle));
+//        Log.d("draw", "IS TEXTURE: " + GLES20.glIsTexture(textureId));
         GLES20.glUseProgram(mProgramHandle);
         GlUtil.checkGlError("glUseProgram");
 
         // Set the texture.
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GlUtil.checkGlError("glActiveTexture");
         GLES20.glBindTexture(mTextureTarget, textureId);
+        GlUtil.checkGlError("glBindTexture");
 
         // Copy the model / view / projection matrix over.
         GLES20.glUniformMatrix4fv(muMVPMatrixLoc, 1, false, mvpMatrix, 0);
@@ -590,5 +596,8 @@ public class Texture2dProgram {
         GLES20.glDisableVertexAttribArray(maTextureCoordLoc);
         GLES20.glBindTexture(mTextureTarget, 0);
         GLES20.glUseProgram(0);
+
+        GLES20.glFlush();
+//        Log.d("GLDrawing done", "" + true);
     }
 }

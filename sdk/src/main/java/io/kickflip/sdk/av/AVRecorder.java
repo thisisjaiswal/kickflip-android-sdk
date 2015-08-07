@@ -4,7 +4,11 @@ import android.graphics.Bitmap;
 
 import java.io.IOException;
 
+import io.kickflip.sdk.glmagic.ViewToGLRenderer;
 import io.kickflip.sdk.view.GLCameraView;
+import io.kickflip.sdk.view.drawing.DrawingProvider;
+import io.kickflip.sdk.view.drawing.DrawingView;
+import io.kickflip.sdk.view.drawing.TextureDrawer;
 
 /**
  * Records an Audio / Video stream to disk.
@@ -40,12 +44,24 @@ public class AVRecorder {
         mIsRecording = false;
     }
 
+    public TextureDrawer getRenderer() {
+        return mCamEncoder.getRenderer();
+    }
+
+    public void newTexture(int texture) {
+        mCamEncoder.newTexture(texture);
+    }
+
     public void setPreviewDisplay(GLCameraView display){
         mCamEncoder.setPreviewDisplay(display);
     }
 
     public void overlay(Bitmap bitmap) {
         mCamEncoder.overlay(bitmap);
+    }
+
+    public void setDrawingView(DrawingView drawingView) {
+        mCamEncoder.setDrawingView(drawingView);
     }
 
     public void applyFilter(int filter){
@@ -97,6 +113,7 @@ public class AVRecorder {
         mCamEncoder.stopRecording();
     }
 
+
     /**
      * Prepare for a subsequent recording. Must be called after {@link #stopRecording()}
      * and before {@link #release()}
@@ -107,6 +124,10 @@ public class AVRecorder {
         mMicEncoder.reset(config);
         mConfig = config;
         mIsRecording = false;
+    }
+
+    public CameraEncoder getCameraEncoder() {
+        return mCamEncoder;
     }
 
     /**

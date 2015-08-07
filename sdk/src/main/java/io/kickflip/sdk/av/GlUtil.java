@@ -19,6 +19,7 @@ package io.kickflip.sdk.av;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.opengl.GLES20;
@@ -32,6 +33,7 @@ import java.nio.FloatBuffer;
 
 /**
  * Some OpenGL utility functions.
+ *
  * @hide
  */
 public class GlUtil {
@@ -40,7 +42,8 @@ public class GlUtil {
     private static final int SIZEOF_FLOAT = 4;
 
 
-    private GlUtil() {}     // do not instantiate
+    private GlUtil() {
+    }     // do not instantiate
 
     /**
      * Creates a new program from the supplied vertex and fragment shaders.
@@ -107,14 +110,23 @@ public class GlUtil {
         if (error != GLES20.GL_NO_ERROR) {
             String msg = op + ": glError 0x" + Integer.toHexString(error);
             Log.e(TAG, msg);
+            flushGlErrors(op);
             throw new RuntimeException(msg);
+        }
+    }
+
+    private static void flushGlErrors(String op) {
+        int error;
+        while ( (error = GLES20.glGetError()) != GLES20.GL_NO_ERROR ) {
+            String msg = op + ": glError 0x" + Integer.toHexString(error);
+            Log.e(TAG, msg);
         }
     }
 
     /**
      * Checks to see if the location we obtained is valid.  GLES returns -1 if a label
      * could not be found, but does not set the GL error.
-     * <p>
+     * <p/>
      * Throws a RuntimeException if the location is invalid.
      */
     public static void checkLocation(int location, String label) {
@@ -156,18 +168,13 @@ public class GlUtil {
         }
     }
 
-    public static int createTextureWithTextContent (String text){
+    public static int createTextureWithTextContent(String text) {
         // Create an empty, mutable bitmap
         Bitmap bitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888);
         // get a canvas to paint over the bitmap
         Canvas canvas = new Canvas(bitmap);
-        canvas.drawARGB(0,0,255,0);
+        canvas.drawARGB(0, 0, 255, 0);
 
-        // get a background image from resources
-        // note the image format must match the bitmap format
-//        Drawable background = context.getResources().getDrawable(R.drawable.background);
-//        background.setBounds(0, 0, 256, 256);
-//        background.draw(canvas); // draw the background to our bitmap
 
         // Draw the text
         Paint textPaint = new Paint();
@@ -175,7 +182,7 @@ public class GlUtil {
         textPaint.setAntiAlias(true);
         textPaint.setARGB(0xff, 0xff, 0xff, 0xff);
         // draw the text centered
-        canvas.drawText(text, 16,112, textPaint);
+        canvas.drawText(text, 16, 112, textPaint);
 
         int[] textures = new int[1];
 
@@ -204,13 +211,15 @@ public class GlUtil {
         return textures[0];
     }
 
-    public static int createTextureFromImage(Bitmap bitmap){
+    public static int createTextureFromImage(Bitmap bitmap) {
+        
 
-//        rotation is needed due to the camera rotation issue in portrait mode
-        Canvas canvas = new Canvas(bitmap);
-        canvas.rotate(-90, bitmap.getWidth()/2, bitmap.getHeight()/2);
+        /*
+        * TODO: Por ahora, por cada llamada estoy asociando el bitmap a un id distinto, cada vez.
+        * TODO: tengo que ver como asociarlo siempre la mismo id, o liberar el id anterior.
+        * */
 
-        int[] textures = new int[1];
+         int[] textures = new int[1];
 
         //Generate one texture pointer...
         GLES20.glGenTextures(1, textures, 0);
@@ -227,8 +236,10 @@ public class GlUtil {
 
         //Use the Android GLUtils to specify a two-dimensional texture image from our bitmap
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+
         //Clean up
-        bitmap.recycle();
+//        Voy a evitar el recycle para ver si la idea de usar nada mas que 2 bitmaps funciona
+//        bitmap.recycle();
 
         return textures[0];
     }

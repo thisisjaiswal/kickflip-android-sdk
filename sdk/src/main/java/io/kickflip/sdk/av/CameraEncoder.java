@@ -13,6 +13,7 @@ import android.os.Message;
 import android.os.Trace;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.TextureView;
 
 import com.google.common.eventbus.EventBus;
 
@@ -22,15 +23,20 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 import io.kickflip.sdk.event.CameraOpenedEvent;
+import io.kickflip.sdk.event.RunOnUIEvent;
+import io.kickflip.sdk.glmagic.ViewToGLRenderer;
 import io.kickflip.sdk.view.GLCameraEncoderView;
 import io.kickflip.sdk.view.GLCameraView;
+import io.kickflip.sdk.view.drawing.DrawingProvider;
+import io.kickflip.sdk.view.drawing.DrawingView;
+import io.kickflip.sdk.view.drawing.TextureDrawer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @hide
  */
-public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, Runnable {
+public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, Runnable, TextureView.SurfaceTextureListener {
     private static final String TAG = "CameraEncoder";
     private static final boolean TRACE = false;         // Systrace
     private static final boolean VERBOSE = false;       // Lots of logging
@@ -68,7 +74,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private FullFrameRect mFullScreen;
     private FullFrameRect mFullScreenOverlay;
     private int mTextureId;
-    private int mOverlayTextureId;
+    private int mOverlayTextureId = -5;
     private int mFrameNum;
     private VideoEncoderCore mVideoEncoder;
     private Camera mCamera;
@@ -84,6 +90,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private final Object mStopFence = new Object();
     private final Object mSurfaceTextureFence = new Object();   // guards mSurfaceTexture shared with GLSurfaceView.Renderer
     private SurfaceTexture mSurfaceTexture;
+    private SurfaceTexture mOverlaySurfaceTexture;
     private final Object mReadyForFrameFence = new Object();    // guards mReadyForFrames/mRecording
     private boolean mReadyForFrames;                            // Is the SurfaceTexture et all created
     private boolean mRecording;                                 // Are frames being recorded
@@ -98,6 +105,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     private GLSurfaceView mDisplayView;
     private CameraSurfaceRenderer mDisplayRenderer;
+    private DrawingView drawingView;
 
     private int mCurrentCamera;
     private int mDesiredCamera;
@@ -175,6 +183,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mState = STATE.INITIALIZED;
     }
 
+    public void newTexture(int texture) {
+        mDisplayRenderer.newTexture(texture);
+    }
+
     public SessionConfig getConfig() {
         return mSessionConfig;
     }
@@ -191,6 +203,11 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         if (mCurrentCamera == 0)
             otherCamera = 1;
         requestCamera(otherCamera);
+    }
+
+    public TextureDrawer getRenderer() {
+//        return null;
+        return mDisplayRenderer;
     }
 
     /**
@@ -231,7 +248,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * Request a thumbnail be generated deltaFrame frames from now.
      *
      * @param scaleFactor a downscale factor. e.g scaleFactor 2 will
-     * produce a 640x360 thumbnail from a 1280x720 frame
+     *                    produce a 640x360 thumbnail from a 1280x720 frame
      */
     public void requestThumbnailOnDeltaFrameWithScaling(int deltaFrame, int scaleFactor) {
         requestThumbnailOnFrameWithScaling(mFrameNum + deltaFrame, scaleFactor);
@@ -316,6 +333,14 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             if (mSurfaceTexture == null)
                 Log.w(TAG, "getSurfaceTextureForDisplay called before ST created");
             return mSurfaceTexture;
+        }
+    }
+
+    public SurfaceTexture getSurfaceTextureForOverlay() {
+        synchronized (mSurfaceTextureFence) {
+            if (mSurfaceTexture == null)
+                Log.w(TAG, "getSurfaceTextureForDisplay called before ST created");
+            return mOverlaySurfaceTexture;
         }
     }
 
@@ -512,7 +537,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
                 surfaceTexture.getTransformMatrix(mTransform);
                 mFullScreen.drawFrame(mTextureId, mTransform);
-                if (mOverlayTextureId != -5) mFullScreenOverlay.drawFrame(mOverlayTextureId, mTransform);
+                if (mOverlayTextureId != -5 && mOverlaySurfaceTexture != null) {
+                    mOverlaySurfaceTexture.getTransformMatrix(mTransform);
+                    mFullScreenOverlay.drawFrame(mOverlayTextureId, mTransform);
+                }
 
                 if (TRACE) Trace.endSection();
                 if (!mEncodedFirstFrame) {
@@ -624,12 +652,42 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         }
     }
 
-    public void updateOverlay(int overlayId) {
+    public void updateOverlay(int overlayId, SurfaceTexture mOverlaySurfaceTexture) {
         this.mOverlayTextureId = overlayId;
+        this.mOverlaySurfaceTexture = mOverlaySurfaceTexture;
     }
 
     public void overlay(Bitmap bitmap) {
         mDisplayRenderer.overlay(bitmap);
+    }
+
+    public void setDrawingView(DrawingView drawingView) {
+//        mDisplayRenderer.setDrawingProvider(drawingProvider);
+        this.drawingView = drawingView;
+    }
+
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
+        mOverlaySurfaceTexture = surfaceTexture;
+        if (mOverlayTextureId == -5) {
+            surfaceTexture.detachFromGLContext();
+            surfaceTexture.attachToGLContext(mOverlayTextureId);
+        }
+    }
+
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {
+
+    }
+
+    @Override
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+        return false;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
+
     }
 
     /**
@@ -640,7 +698,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             if (mSurfaceTexture != null) {
                 // We're hot-swapping the display EGLContext after
                 // creating the initial SurfaceTexture for camera display
-                mInputWindowSurface.makeCurrent();
+//                mInputWindowSurface.makeCurrent();
                 mSurfaceTexture.detachFromGLContext();
                 // Release the EGLSurface and EGLContext.
                 mInputWindowSurface.releaseEglSurface();
@@ -659,7 +717,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 GLES20.glEnable(GLES20.GL_BLEND);
                 GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
                 mFullScreenOverlay = new FullFrameRect(
-                        new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D));
+                        new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
                 mFullScreen.getProgram().setTexSize(mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
                 GLES20.glViewport(0, 0, mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
                 mIncomingSizeUpdated = true;
@@ -727,7 +785,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         mFullScreenOverlay = new FullFrameRect(
-                new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D));
+                new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
         mFullScreen.getProgram().setTexSize(width, height);
         GLES20.glViewport(0, 0, width, height);
         mIncomingSizeUpdated = true;

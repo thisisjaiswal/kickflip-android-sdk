@@ -61,6 +61,7 @@ public class FullFrameRect {
     public FullFrameRect(Texture2dProgram program) {
         mProgram = program;
         Matrix.setIdentityM(IDENTITY_MATRIX, 0);
+//        Matrix.setRotateM();
     }
 
     /**

@@ -62,5 +62,4 @@ public class BroadcastActivity extends ImmersiveActivity implements BroadcastLis
     public void onBroadcastError(KickflipException error) {
         mMainBroadcastListener.onBroadcastError(error);
     }
-
 }
