@@ -8,6 +8,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -28,6 +29,7 @@ import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.event.StreamLocationAddedEvent;
 import io.kickflip.sdk.location.DeviceLocation;
 import io.kickflip.sdk.model.BucketSession;
+import io.kickflip.sdk.model.HLSStream;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -149,6 +151,15 @@ public class Kickflip {
         if (newTask) {
             playbackIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         }
+        host.startActivity(playbackIntent);
+    }
+
+    public static void startMediaPlayerActivity(Activity host, HLSStream stream) {
+        Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
+        Bundle extras = new Bundle();
+        playbackIntent.putExtra("mediaUrl", stream.isLive()?stream.getLive():stream.getFull());
+        extras.putSerializable("STREAM", stream);
+        playbackIntent.putExtras(extras);
         host.startActivity(playbackIntent);
     }
 

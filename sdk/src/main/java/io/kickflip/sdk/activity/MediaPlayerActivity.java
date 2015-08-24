@@ -6,6 +6,7 @@ import android.view.MenuItem;
 
 import io.kickflip.sdk.R;
 import io.kickflip.sdk.fragment.MediaPlayerFragment;
+import io.kickflip.sdk.model.HLSStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -23,10 +24,11 @@ public class MediaPlayerActivity extends ImmersiveActivity {
         //Uri intentData = getIntent().getData();
         //String mediaUrl = isKickflipUrl(intentData) ? intentData.toString() : getIntent().getStringExtra("mediaUrl");
         String mediaUrl = getIntent().getStringExtra("mediaUrl");
+        HLSStream stream = (HLSStream) getIntent().getSerializableExtra("STREAM");
         checkNotNull(mediaUrl, new IllegalStateException("MediaPlayerActivity started without a mediaUrl"));
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
-                    .replace(R.id.container, MediaPlayerFragment.newInstance(mediaUrl))
+                    .replace(R.id.container, MediaPlayerFragment.newInstance(stream, mediaUrl))
                     .commit();
         }
     }

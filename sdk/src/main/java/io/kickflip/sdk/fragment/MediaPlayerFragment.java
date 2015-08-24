@@ -2,10 +2,8 @@ package io.kickflip.sdk.fragment;
 
 
 import android.app.Fragment;
-import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +12,8 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -22,36 +22,35 @@ import net.chilicat.m3u8.Element;
 import net.chilicat.m3u8.Playlist;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import io.kickflip.sdk.Kickflip;
+import io.kickflip.sdk.KickflipApplication;
 import io.kickflip.sdk.R;
-import io.kickflip.sdk.api.KickflipApiClient;
-import io.kickflip.sdk.api.KickflipCallback;
-import io.kickflip.sdk.api.json.Response;
-import io.kickflip.sdk.api.json.Stream;
+import io.kickflip.sdk.adapter.ChatMessageAdapter;
 import io.kickflip.sdk.av.M3u8Parser;
-import io.kickflip.sdk.exception.KickflipException;
-import rx.Observable;
-import rx.functions.Action1;
-import rx.functions.Func1;
+import io.kickflip.sdk.model.HLSStream;
+import io.kickflip.sdk.model.kanvas_live.ChatMessage;
+import io.kickflip.sdk.model.kanvas_live.ChatMessages;
+import io.kickflip.sdk.structure.TimeBomb;
+import io.kickflip.sdk.utilities.MathUtils;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
-/**
- * MediaPlayerFragment demonstrates playing an HLS Stream, and fetching
- * stream metadata via the .m3u8 manifest to decorate the display for Live streams.
- * <p/>
- * Note : {@link Kickflip#setup(Context, String, String, boolean)} or {@link Kickflip#setup(Context, String, String, boolean, KickflipCallback)}
- * must be called before this Fragment is added to any Activity! We can remove this requirement by reading Kickflip credentials
- * from an xml resource...
- */
 public class MediaPlayerFragment extends Fragment implements TextureView.SurfaceTextureListener, MediaController.MediaPlayerControl {
     private static final String TAG = "MediaPlayerFragment";
     private static final boolean VERBOSE = false;
     private static final String ARG_URL = "url";
-    private KickflipApiClient mKickflip;
+    private static final String ARG_STREAM = "STREAM";
+    private static final long interval = 2000;
 
     private ProgressBar mProgress;
     private TextureView mTextureView;
     private TextView mLiveLabel;
+    private EditText mEditText;
+    private View mSendButton;
+    private View mChatInput;
     private MediaPlayer mMediaPlayer;
     private MediaController mMediaController;
     private String mMediaUrl;
@@ -59,8 +58,20 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
     // M3u8 Media properties inferred from .m3u8
     private int mDurationMs;
     private boolean mIsLive;
+    private boolean mediaPlayerReleased = false;
 
     private Surface mSurface;
+
+    private HLSStream hlsStream;
+
+    private ListView mListView;
+    private ChatMessageAdapter mAdapter;
+    private List<ChatMessage> messages;
+
+    private TimeBomb.ExplosionListener explosionListener;
+
+    private long since;
+    private long until;
 
     private M3u8Parser.M3u8ParserCallback m3u8ParserCallback = new M3u8Parser.M3u8ParserCallback() {
         @Override
@@ -80,16 +91,17 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             if (mMediaController != null && isResumed()) {
-                mMediaController.show();
+//                mMediaController.show();
             }
             return false;
         }
     };
 
-    public static MediaPlayerFragment newInstance(String mediaUrl) {
+    public static MediaPlayerFragment newInstance(HLSStream stream, String mediaUrl) {
         MediaPlayerFragment fragment = new MediaPlayerFragment();
         Bundle args = new Bundle();
         args.putString(ARG_URL, mediaUrl);
+        args.putSerializable(ARG_STREAM, stream);
         fragment.setArguments(args);
         return fragment;
     }
@@ -103,8 +115,14 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mMediaUrl = getArguments().getString(ARG_URL);
-            if (Kickflip.isKickflipUrl(Uri.parse(mMediaUrl))) {
-            } else if (mMediaUrl.substring(mMediaUrl.lastIndexOf(".") + 1).equals("m3u8")) {
+            hlsStream = (HLSStream) getArguments().getSerializable(ARG_STREAM);
+            explosionListener = new TimeBomb.ExplosionListener() {
+                @Override
+                public void onExplosion() {
+                    fetchMessages();
+                }
+            };
+            if (mMediaUrl.substring(mMediaUrl.lastIndexOf(".") + 1).equals("m3u8")) {
                 parseM3u8FromMediaUrl();
             } else {
                 throw new IllegalArgumentException("Unknown HLS media url format: " + mMediaUrl);
@@ -135,9 +153,12 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
                 public void onPrepared(MediaPlayer mp) {
                     if (VERBOSE) Log.i(TAG, "media player prepared");
                     mProgress.setVisibility(View.GONE);
-                    mMediaController.setEnabled(true);
-                    mTextureView.setOnTouchListener(mTextureViewTouchListener);
+                    mMediaController.setEnabled(false);
+//                    mMediaController.setEnabled(true);
+//                    mTextureView.setOnTouchListener(mTextureViewTouchListener);
                     mMediaPlayer.start();
+                    mChatInput.setVisibility(View.VISIBLE);
+                    init();
                 }
             });
             mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -172,6 +193,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         super.onPause();
 
         if (mMediaPlayer != null) {
+            mediaPlayerReleased = true;
             mMediaPlayer.release();
         }
     }
@@ -186,8 +208,93 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
             mTextureView.setSurfaceTextureListener(this);
             mProgress = (ProgressBar) root.findViewById(R.id.progress);
             mLiveLabel = (TextView) root.findViewById(R.id.liveLabel);
+            mListView = (ListView) root.findViewById(R.id.fragment_media_player_chat_listview);
+            mEditText = (EditText) root.findViewById(R.id.fragment_media_player_message_input);
+            mSendButton = root.findViewById(R.id.fragment_media_player_send_button);
+            mChatInput = root.findViewById(R.id.fragment_media_player_chat_input);
+            mSendButton.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View view) {
+                    sendMessage();
+                }
+            });
         }
         return root;
+    }
+
+    private void init() {
+        messages = new ArrayList<ChatMessage>();
+        mAdapter = new ChatMessageAdapter(getActivity(), messages);
+        mListView.setAdapter(mAdapter);
+        setExplosion();
+    }
+
+    private void setExplosion() {
+        TimeBomb.create()
+                .withListener(explosionListener)
+                .withTime(interval)
+                .start();
+    }
+
+    private void sendMessage() {
+        String message = mEditText.getText().toString();
+        mEditText.setText("");
+        if (message.equals("")) return;
+
+
+        KickflipApplication.getKanvasService().sendMessage(hlsStream.getLid(), new ChatMessage(message, null, MathUtils.round(mMediaPlayer.getCurrentPosition() / 1000.0, 2)), new Callback<ChatMessage>() {
+            @Override
+            public void success(final ChatMessage chatMessage, Response response) {
+
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.w(TAG, "error sending message: " + error.getMessage());
+            }
+        });
+    }
+
+    private void fetchMessages() {
+        if (mediaPlayerReleased || !mMediaPlayer.isPlaying()) return;
+//        until = (new Date().getTime() - startedAt)/1000 ;
+        until = mMediaPlayer.getCurrentPosition() / 1000;
+        Log.w(TAG, "since: " + since + ", until: " + until + " - " + (hlsStream == null));
+        KickflipApplication.getKanvasService().pollMessages(hlsStream.getLid(), since, until, new Callback<ChatMessages>() {
+            @Override
+            public void success(final ChatMessages chatMessages, Response response) {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+//                        messages.addAll(chatMessages.getChats());
+//                        mAdapter.notifyDataSetChanged();
+////                        This makes messages go up smoothly, but fading out animation is still pending
+//                        mListView.smoothScrollToPosition(mListView.getCount() - 1);
+                        addMessages(chatMessages);
+                        since = until;
+                        setExplosion();
+                    }
+                });
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+
+            }
+        });
+    }
+
+    private void addMessage(ChatMessage chatMessage) {
+        messages.add(chatMessage);
+        mAdapter.notifyDataSetChanged();
+        mListView.smoothScrollToPosition(mListView.getCount() - 1);
+    }
+
+    private void addMessages(ChatMessages chatMessages) {
+        messages.addAll(chatMessages.getChats());
+        mAdapter.notifyDataSetChanged();
+        mListView.smoothScrollToPosition(mListView.getCount() - 1);
     }
 
     private void parseM3u8FromMediaUrl() {

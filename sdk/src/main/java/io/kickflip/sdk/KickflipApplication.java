@@ -2,13 +2,12 @@ package io.kickflip.sdk;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.res.Resources;
-import android.util.Log;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import io.kickflip.sdk.interceptor.KickflipInterceptor;
 import io.kickflip.sdk.service.KanvasService;
 import retrofit.RestAdapter;
 import retrofit.converter.GsonConverter;
@@ -30,7 +29,9 @@ public class KickflipApplication extends Application {
 
         RestAdapter kanvasAdapter = new RestAdapter.Builder()
                 .setEndpoint(ENDPOINT_KANVAS)
+                .setLogLevel(RestAdapter.LogLevel.FULL)
                 .setConverter(new GsonConverter(gson))
+                .setRequestInterceptor(new KickflipInterceptor())
                 .build();
 
         kanvasService = kanvasAdapter.create(KanvasService.class);
