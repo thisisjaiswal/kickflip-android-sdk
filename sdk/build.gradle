@@ -4,18 +4,6 @@ apply plugin: 'com.jakewharton.hugo'
 //apply plugin: 'com.github.dcendents.android-maven'
 //apply plugin: 'com.jfrog.bintray'
 
-group = 'io.kickflip'
-version = getVersionName()
-
-
-def getVersionCode() {
-    return 11
-}
-
-def getVersionName() {
-    return '2.0'
-}
-
 android {
     compileSdkVersion 22
     buildToolsVersion "22.0.1"
@@ -54,22 +42,19 @@ dependencies {
     compile 'com.google.guava:guava:18.0'
     compile 'com.android.support:support-v4:22.1.1'
     compile 'com.android.support:appcompat-v7:22.1.1'
-
     compile 'com.amazonaws:aws-android-sdk-core:2.2.1'
     compile 'com.amazonaws:aws-android-sdk-s3:2.2.1'
-
     compile 'com.squareup.retrofit:retrofit:1.9.0'
     compile 'com.squareup.okhttp:okhttp:2.3.0'
     compile 'io.reactivex:rxandroid:0.24.0'
-
     compile 'net.lingala.zip4j:zip4j:1.2.4'
-
     compile files('libs/m3u8parser-0.2.jar')
-
     // For Doclava JavaDoc
     jaxDoclet("com.google.doclava:doclava:1.0.5")
     //classpaths files('build/classes/release')
-    classpaths fileTree(dir: 'build/classes/release').matching { include 'io/kickflip/sdk/Kickflip.java' }
+    classpaths fileTree(dir: 'build/classes/release').matching {
+        include 'io/kickflip/sdk/Kickflip.java'
+    }
     classpaths files(new File(System.getenv('ANDROID_HOME') + '/platforms/android-21/android.jar'))
 }
 

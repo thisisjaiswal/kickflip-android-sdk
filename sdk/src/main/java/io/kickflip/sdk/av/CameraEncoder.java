@@ -23,11 +23,8 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 import io.kickflip.sdk.event.CameraOpenedEvent;
-import io.kickflip.sdk.event.RunOnUIEvent;
-import io.kickflip.sdk.glmagic.ViewToGLRenderer;
 import io.kickflip.sdk.view.GLCameraEncoderView;
 import io.kickflip.sdk.view.GLCameraView;
-import io.kickflip.sdk.view.drawing.DrawingProvider;
 import io.kickflip.sdk.view.drawing.DrawingView;
 import io.kickflip.sdk.view.drawing.TextureDrawer;
 

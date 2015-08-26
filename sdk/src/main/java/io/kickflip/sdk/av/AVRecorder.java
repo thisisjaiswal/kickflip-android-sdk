@@ -4,9 +4,7 @@ import android.graphics.Bitmap;
 
 import java.io.IOException;
 
-import io.kickflip.sdk.glmagic.ViewToGLRenderer;
 import io.kickflip.sdk.view.GLCameraView;
-import io.kickflip.sdk.view.drawing.DrawingProvider;
 import io.kickflip.sdk.view.drawing.DrawingView;
 import io.kickflip.sdk.view.drawing.TextureDrawer;
 

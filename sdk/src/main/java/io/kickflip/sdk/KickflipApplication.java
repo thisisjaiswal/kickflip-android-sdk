@@ -12,7 +12,7 @@ import io.kickflip.sdk.service.KanvasService;
 import retrofit.RestAdapter;
 import retrofit.converter.GsonConverter;
 
-public class KickflipApplication extends Application {
+public class KickflipApplication {
 
     private static boolean initialized = false;
     private static Context mContext;

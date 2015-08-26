@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.common.eventbus.EventBus;
@@ -18,11 +17,8 @@ import com.google.common.eventbus.EventBus;
 import java.io.File;
 import java.io.IOException;
 
-import io.kickflip.sdk.activity.BroadcastActivity;
 import io.kickflip.sdk.activity.GlassBroadcastActivity;
 import io.kickflip.sdk.activity.MediaPlayerActivity;
-import io.kickflip.sdk.api.KickflipApiClient;
-import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
@@ -30,9 +26,6 @@ import io.kickflip.sdk.event.StreamLocationAddedEvent;
 import io.kickflip.sdk.location.DeviceLocation;
 import io.kickflip.sdk.model.BucketSession;
 import io.kickflip.sdk.model.HLSStream;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -111,14 +104,14 @@ public class Kickflip {
      * @param listener an optional {@link io.kickflip.sdk.av.BroadcastListener} to be notified on
      *                 broadcast events
      */
-    public static void startBroadcastActivity(Activity host, BroadcastListener listener) {
+    public static void startBroadcastActivity(Activity host, BroadcastListener listener, Class activityClass) {
         checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
         checkNotNull(sBucketSession);
         if (sSessionConfig == null) {
             setupDefaultSessionConfig();
         }
         sBroadcastListener = listener;
-        Intent broadcastIntent = new Intent(host, BroadcastActivity.class);
+        Intent broadcastIntent = new Intent(host, activityClass);
         broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         host.startActivity(broadcastIntent);
     }

@@ -25,7 +25,7 @@ import io.kickflip.sdk.helper.FilesHelper;
 import io.kickflip.sdk.helper.ResourcesHelper;
 
 
-public class DrawingView extends View implements DrawingProvider {
+public class DrawingView extends View {
     private static final String DRAWING = "drawing_%1$s";
     private Paint mPaint;
     private Paint mBitmapPaint;

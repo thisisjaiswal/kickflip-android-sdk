@@ -16,8 +16,12 @@
 
 package io.kickflip.sdk.av;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 

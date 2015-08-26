@@ -18,7 +18,6 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import io.kickflip.sdk.view.drawing.DrawingProvider;
 import io.kickflip.sdk.view.drawing.TextureDrawer;
 
 /**
@@ -75,7 +74,6 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer, SurfaceTexture.On
     private int mIncomingHeight;
     private int mCurrentFilter;
     private int mNewFilter;
-    private DrawingProvider drawingProvider;
 
     boolean showBox = false;
 
@@ -222,10 +220,6 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer, SurfaceTexture.On
     public void overlay(Bitmap bitmap) {
         mOverlayTextureId = GlUtil.createTextureFromImage(bitmap);
 //        mCameraEncoder.updateOverlay(mOverlayTextureId);
-    }
-
-    public void setDrawingProvider(DrawingProvider drawingProvider) {
-        this.drawingProvider = drawingProvider;
     }
 
     public void handleTouchEvent(MotionEvent ev) {
