@@ -119,7 +119,7 @@ public class GlassBroadcastFragment extends Fragment {
 
         // Hide views for glass
         recordButton.setVisibility(View.GONE);
-        root.findViewById(R.id.filterSpinner).setVisibility(View.GONE);
+//        root.findViewById(R.id.filterSpinner).setVisibility(View.GONE);
 //        root.findViewById(R.id.cameraFlipper).setVisibility(View.GONE);
 
         if (mBroadcaster.isLive()) {

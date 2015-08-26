@@ -14,79 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="visible" />
-
-        <!--<view-->
-        <!--android:id="@+id/main_view"-->
-        <!--class="io.kickflip.sdk.view.testrender.MainView"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:layout_marginBottom="40dp"/>-->
     </FrameLayout>
-
-    <!--<io.kickflip.sdk.view.CameraRendererView-->
-    <!--android:id="@+id/fragment_broadcast_camera_renderer"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"/>-->
-
-    <!--<android.opengl.GLSurfaceView-->
-    <!--android:id="@+id/gl_surface_view"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"/>-->
-
-    <Spinner
-        android:id="@+id/filterSpinner"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:alpha=".7"
-        android:background="@drawable/effects_bg"
-        android:prompt="@string/effects_chooser_title"
-        android:spinnerMode="dialog"
-        android:tag="filter" />
-
-
-    <!--<ImageButton-->
-    <!--android:id="@+id/cameraFlipper3"-->
-    <!--android:tag="camera"-->
-    <!--android:src="@drawable/camreverse_bg"-->
-    <!--android:alpha=".7"-->
-    <!--android:background="@android:color/transparent"-->
-    <!--android:layout_alignParentBottom="true"-->
-    <!--android:layout_alignParentRight="true"-->
-    <!--android:layout_width="50dp"-->
-    <!--android:layout_height="50dp"-->
-    <!--android:layout_marginTop="@dimen/status_bar_margin"-->
-    <!--android:layout_marginRight="10dp"-->
-    <!--android:layout_marginBottom="0dp"/>-->
-
-    <!--<ImageButton-->
-    <!--android:id="@+id/cameraFlipper2"-->
-    <!--android:tag="camera"-->
-    <!--android:src="@drawable/camreverse_bg"-->
-    <!--android:alpha=".7"-->
-    <!--android:background="@android:color/transparent"-->
-    <!--android:layout_alignParentBottom="true"-->
-    <!--android:layout_centerHorizontal="true"-->
-    <!--android:layout_width="50dp"-->
-    <!--android:layout_height="50dp"-->
-    <!--android:layout_marginTop="@dimen/status_bar_margin"-->
-    <!--android:layout_marginRight="10dp"-->
-    <!--android:layout_marginBottom="0dp"/>-->
-
-    <!--<ImageButton-->
-    <!--android:id="@+id/cameraFlipper1"-->
-    <!--android:tag="camera"-->
-    <!--android:src="@drawable/camreverse_bg"-->
-    <!--android:alpha=".7"-->
-    <!--android:background="@android:color/transparent"-->
-    <!--android:layout_alignParentBottom="true"-->
-    <!--android:layout_alignParentLeft="true"-->
-    <!--android:layout_width="50dp"-->
-    <!--android:layout_height="50dp"-->
-    <!--android:layout_marginTop="@dimen/status_bar_margin"-->
-    <!--android:layout_marginRight="10dp"-->
-    <!--android:layout_marginBottom="0dp"/>-->
 
     <TextView
         android:id="@+id/liveLabel"
@@ -112,32 +40,12 @@
         android:src="@drawable/rotate_device"
         android:visibility="gone" />
 
-    <!--<view-->
-    <!--android:id="@+id/drawing_view"-->
-    <!--class="io.kickflip.sdk.view.drawing.DrawingView"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent" />-->
-
     <view
         android:id="@+id/kanvas_overlay_drawing_view"
         class="io.kickflip.sdk.view.drawing.GLDrawingView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="40dp" />
-
-    <!--<io.kickflip.sdk.glmagic.GLFrameLayout-->
-        <!--android:id="@+id/gl_frame_layout"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:background="#00FFFFFF">-->
-
-        <!--<view-->
-            <!--android:id="@+id/kanvas_overlay_drawing_view"-->
-            <!--class="io.kickflip.sdk.view.drawing.DrawingView"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:layout_marginBottom="40dp" />-->
-    <!--</io.kickflip.sdk.glmagic.GLFrameLayout>-->
 
     <Button
         android:id="@+id/recordButton"
@@ -149,5 +57,48 @@
         android:alpha=".7"
         android:background="@drawable/red_dot"
         android:gravity="center" />
+
+    <Button
+        android:id="@+id/clearButton"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:alpha=".7"
+        android:background="@drawable/abc_ic_clear_mtrl_alpha" />
+
+    <Button
+        android:id="@+id/switchCameraButton"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_toLeftOf="@id/clearButton"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:alpha=".7"
+        android:background="@android:drawable/ic_menu_camera" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.6"/>
+        <ListView
+            android:id="@+id/fragment_broadcast_chat_listview"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.4"
+            android:scrollbars="none"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="4.0sp"
+            android:stackFromBottom="true"
+            android:requiresFadingEdge="vertical"
+            android:fadingEdgeLength="64sp"/>
+    </LinearLayout>
 
 </RelativeLayout>

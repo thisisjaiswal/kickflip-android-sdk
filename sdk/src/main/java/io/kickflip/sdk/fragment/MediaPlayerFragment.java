@@ -209,6 +209,15 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
             mProgress = (ProgressBar) root.findViewById(R.id.progress);
             mLiveLabel = (TextView) root.findViewById(R.id.liveLabel);
             mListView = (ListView) root.findViewById(R.id.fragment_media_player_chat_listview);
+
+//            Disable scrolling
+            mListView.setOnTouchListener(new View.OnTouchListener() {
+
+                public boolean onTouch(View v, MotionEvent event) {
+                    return (event.getAction() == MotionEvent.ACTION_MOVE);
+                }
+            });
+
             mEditText = (EditText) root.findViewById(R.id.fragment_media_player_message_input);
             mSendButton = root.findViewById(R.id.fragment_media_player_send_button);
             mChatInput = root.findViewById(R.id.fragment_media_player_chat_input);
@@ -246,7 +255,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         KickflipApplication.getKanvasService().sendMessage(hlsStream.getLid(), new ChatMessage(message, null, MathUtils.round(mMediaPlayer.getCurrentPosition() / 1000.0, 2)), new Callback<ChatMessage>() {
             @Override
             public void success(final ChatMessage chatMessage, Response response) {
-
+                
             }
 
             @Override
@@ -264,6 +273,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         KickflipApplication.getKanvasService().pollMessages(hlsStream.getLid(), since, until, new Callback<ChatMessages>() {
             @Override
             public void success(final ChatMessages chatMessages, Response response) {
+                if (getActivity() == null) return;
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

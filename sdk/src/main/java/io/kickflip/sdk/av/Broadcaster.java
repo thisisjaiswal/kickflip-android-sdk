@@ -21,6 +21,7 @@ import io.kickflip.sdk.api.json.HlsStream;
 import io.kickflip.sdk.api.json.User;
 import io.kickflip.sdk.api.s3.S3BroadcastManager;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
+import io.kickflip.sdk.event.BroadcastIsLiveEvent;
 import io.kickflip.sdk.event.HlsManifestWrittenEvent;
 import io.kickflip.sdk.event.HlsSegmentWrittenEvent;
 import io.kickflip.sdk.event.MuxerFinishedEvent;
@@ -70,6 +71,8 @@ public class Broadcaster extends AVRecorder {
     private EventBus mEventBus;
     private boolean mReadyToBroadcast;                                  // Kickflip user registered and endpoint ready
     private boolean isRecording = false;
+    private boolean isLive = false;
+    private boolean firstSegmentUploaded;
     private boolean mSentBroadcastLiveEvent;
     private int mVideoBitrate;
     private int mNumSegmentsWritten;
@@ -205,7 +208,8 @@ public class Broadcaster extends AVRecorder {
      * @return
      */
     public boolean isLive() {
-        return mSentBroadcastLiveEvent;
+//        return mSentBroadcastLiveEvent;
+        return isLive;
     }
 
     /**
@@ -216,6 +220,10 @@ public class Broadcaster extends AVRecorder {
     public void stopRecording() {
         super.stopRecording();
         mSentBroadcastLiveEvent = false;
+    }
+
+    public boolean firstSegmentUploaded() {
+        return firstSegmentUploaded;
     }
 
     /**
@@ -257,6 +265,14 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
+    public void goOffline() {
+        isLive = false;
+    }
+
+    public String getLid() {
+        return bucketSession.getLid();
+    }
+
     /**
      * An S3 .ts segment upload completed.
      * <p/>
@@ -270,6 +286,11 @@ public class Broadcaster extends AVRecorder {
             boolean deletedFile = uploadEvent.getFile().delete();
             if (VERBOSE)
                 Log.i(TAG, "Deleting uploaded segment. " + uploadEvent.getFile().getAbsolutePath() + " Succcess: " + deletedFile);
+        }
+        if (!firstSegmentUploaded()) {
+            isLive = true;
+            firstSegmentUploaded = true;
+            mEventBus.post(new BroadcastIsLiveEvent("LIVE_STATE"));
         }
         try {
             if (isKitKat() && mConfig.isAdaptiveBitrate() && isRecording()) {

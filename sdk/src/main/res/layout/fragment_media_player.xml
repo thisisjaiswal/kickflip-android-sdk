@@ -50,11 +50,12 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.44"
+            android:scrollbars="none"
             android:divider="@android:color/transparent"
             android:dividerHeight="4.0sp"
             android:stackFromBottom="true"
             android:requiresFadingEdge="vertical"
-            android:fadingEdgeLength="128sp" />
+            android:fadingEdgeLength="128sp"/>
 
 
         <LinearLayout

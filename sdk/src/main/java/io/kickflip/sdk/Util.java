@@ -60,7 +60,7 @@ public class Util {
                 .withTitle(Util.getHumanDateString())
                 .withDescription("A live stream!")
                 .withAdaptiveStreaming(true)
-                .withVideoResolution(1280, 720)
+                .withVideoResolution(720, 1280)
                 .withVideoBitrate(2 * 1000 * 1000)
                 .withAudioBitrate(192 * 1000)
                 .withExtraInfo(extraData)

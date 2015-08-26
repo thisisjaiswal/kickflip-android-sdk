@@ -2,6 +2,8 @@ package io.kickflip.sdk.view.drawing;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -49,5 +51,18 @@ public class GLDrawingView extends DrawingView implements GLRenderable {
         }
 
         mTextureDrawer.finishDraw(glAttachedCanvas);
+    }
+
+    @Override
+    public void clear() {
+        super.clear();
+        for (int i = 0; i < 60; i++) {
+
+            Canvas glAttachedCanvas = mTextureDrawer.startDraw();
+            if (glAttachedCanvas != null) {
+                glAttachedCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+            }
+            mTextureDrawer.finishDraw(glAttachedCanvas);
+        }
     }
 }

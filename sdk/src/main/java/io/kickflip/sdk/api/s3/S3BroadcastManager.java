@@ -154,6 +154,7 @@ public class S3BroadcastManager implements Runnable {
     }
 
     private void hitDone() {
+        mBroadcaster.goOffline();
         KickflipApplication.getKanvasService().finishStream(lid, new BucketDone(true), new Callback<Object>() {
             @Override
             public void success(Object o, Response response) {
