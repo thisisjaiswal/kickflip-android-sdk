@@ -1,6 +1,5 @@
 package io.kickflip.sdk;
 
-import android.app.Application;
 import android.content.Context;
 
 import com.google.gson.FieldNamingPolicy;
@@ -8,7 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import io.kickflip.sdk.interceptor.KickflipInterceptor;
-import io.kickflip.sdk.service.KanvasService;
+import io.kickflip.sdk.service.StreamService;
 import retrofit.RestAdapter;
 import retrofit.converter.GsonConverter;
 
@@ -19,7 +18,7 @@ public class KickflipApplication {
 
     private static String ENDPOINT_KANVAS;
 
-    private static KanvasService kanvasService;
+    private static StreamService streamService;
 
     private static void buildRestServices() {
         ENDPOINT_KANVAS = instance().getResources().getString(R.string.kanvas_api);
@@ -34,7 +33,7 @@ public class KickflipApplication {
                 .setRequestInterceptor(new KickflipInterceptor())
                 .build();
 
-        kanvasService = kanvasAdapter.create(KanvasService.class);
+        streamService = kanvasAdapter.create(StreamService.class);
     }
 
     public static Context instance() {
@@ -56,7 +55,7 @@ public class KickflipApplication {
 //        buildRestServices();
 //    }
 
-    public static KanvasService getKanvasService() {
-        return kanvasService;
+    public static StreamService getStreamService() {
+        return streamService;
     }
 }

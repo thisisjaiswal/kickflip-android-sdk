@@ -170,7 +170,7 @@ public class Broadcaster extends AVRecorder {
         mCamEncoder.requestThumbnailOnDeltaFrameWithScaling(10, 1);
         Log.i(TAG, "got StartStreamResponse");
         onGotStreamResponse(null);
-        KickflipApplication.getKanvasService().startStream(bucketSession.getLid(), new BucketStart(true), new Callback<Object>() {
+        KickflipApplication.getStreamService().startStream(bucketSession.getLid(), new BucketStart(true), new Callback<Object>() {
             @Override
             public void success(Object o, Response response) {
                 Log.w(TAG, "started stream!");

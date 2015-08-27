@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import io.kickflip.sdk.FileUtils;
 import io.kickflip.sdk.KickflipApplication;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.event.S3UploadEvent;
@@ -155,7 +154,7 @@ public class S3BroadcastManager implements Runnable {
 
     private void hitDone() {
         mBroadcaster.goOffline();
-        KickflipApplication.getKanvasService().finishStream(lid, new BucketDone(true), new Callback<Object>() {
+        KickflipApplication.getStreamService().finishStream(lid, new BucketDone(true), new Callback<Object>() {
             @Override
             public void success(Object o, Response response) {
                 Log.w(TAG, "done hit right!");

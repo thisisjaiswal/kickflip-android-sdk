@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 
 import io.kickflip.sdk.activity.GlassBroadcastActivity;
-import io.kickflip.sdk.activity.MediaPlayerActivity;
 import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
@@ -29,46 +28,6 @@ import io.kickflip.sdk.model.HLSStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * This is a top-level manager class for all the fundamental SDK actions. Herer you can register
- * your Kickflip account credentials, start a live broadcast or play one back.
- * <p/>
- * <h2>Setup</h2>
- * Before use Kickflip must be setup with your Kickflip Client ID and Client Secret with
- * <li>(Optional) {@link #setSessionConfig(io.kickflip.sdk.av.SessionConfig)}</li>
- * <li>{@link #startBroadcastActivity(android.app.Activity, io.kickflip.sdk.av.BroadcastListener)}</li>
- * </ol>
- * The {@link io.kickflip.sdk.activity.BroadcastActivity} will present a standard camera UI with controls
- * for starting and stopping the broadcast. When the broadcast is stopped, BroadcastActivity will finish
- * after notifying {@link io.kickflip.sdk.av.BroadcastListener#onBroadcastStop()}.
- * <p/>
- * <br/>
- * <b>Customizing broadcast parameters</b>
- * <p/>
- * As noted above, you can optionally call {@link #setSessionConfig(io.kickflip.sdk.av.SessionConfig)} before
- * each call to {@link #startBroadcastActivity(android.app.Activity, io.kickflip.sdk.av.BroadcastListener)}.
- * Here's an example of how to build a {@link io.kickflip.sdk.av.SessionConfig} with {@link io.kickflip.sdk.av.SessionConfig.Builder}:
- * <p/>
- * <code>
- * SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
- * <br/>&nbsp.withTitle(Util.getHumanDateString())
- * <br/>&nbsp.withDescription("Example Description")
- * <br/>&nbsp.withVideoResolution(1280, 720)
- * <br/>&nbsp.withVideoBitrate(2 * 1000 * 1000)
- * <br/>&nbsp.withAudioBitrate(192 * 1000)
- * <br/>&nbsp.withAdaptiveStreaming(true)
- * <br/>&nbsp.withVerticalVideoCorrection(true)
- * <br/>&nbsp.withExtraInfo(extraDataMap)
- * <br/>&nbsp.withPrivateVisibility(false)
- * <br/>&nbsp.withLocation(true)
- * <p/>
- * <br/>&nbsp.build();
- * <br/>Kickflip.setSessionConfig(config);
- * <p/>
- * </code>
- * <br/>
- * Note that SessionConfig is initialized with sane defaults for a 720p broadcast. Every parameter is optional.
- */
 public class Kickflip {
     public static final String TAG = "Kickflip";
     private static Context sContext;
@@ -95,15 +54,6 @@ public class Kickflip {
         return sBucketSession;
     }
 
-    /**
-     * Start {@link io.kickflip.sdk.activity.BroadcastActivity}. This Activity
-     * facilitates control over a single live broadcast.
-     * <p/>
-     *
-     * @param host     the host {@link android.app.Activity} initiating this action
-     * @param listener an optional {@link io.kickflip.sdk.av.BroadcastListener} to be notified on
-     *                 broadcast events
-     */
     public static void startBroadcastActivity(Activity host, BroadcastListener listener, Class activityClass) {
         checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
         checkNotNull(sBucketSession);
@@ -128,33 +78,24 @@ public class Kickflip {
         host.startActivity(broadcastIntent);
     }
 
-    /**
-     * Start {@link io.kickflip.sdk.activity.MediaPlayerActivity}. This Activity
-     * facilitates playing back a Kickflip broadcast.
-     * <p/>
-     *
-     * @param host      the host {@link android.app.Activity} initiating this action
-     * @param streamUrl a path of format https://kickflip.io/<stream_id> or https://xxx.xxx/xxx.m3u8
-     * @param newTask   Whether this Activity should be started as part of a new task. If so, when this Activity finishes
-     *                  the host application will be concluded.
-     */
-    public static void startMediaPlayerActivity(Activity host, String streamUrl, boolean newTask) {
-        Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
-        playbackIntent.putExtra("mediaUrl", streamUrl);
-        if (newTask) {
-            playbackIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        }
-        host.startActivity(playbackIntent);
-    }
 
-    public static void startMediaPlayerActivity(Activity host, HLSStream stream) {
-        Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
-        Bundle extras = new Bundle();
-        playbackIntent.putExtra("mediaUrl", stream.isLive()?stream.getLive():stream.getFull());
-        extras.putSerializable("STREAM", stream);
-        playbackIntent.putExtras(extras);
-        host.startActivity(playbackIntent);
-    }
+//    public static void startMediaPlayerActivity(Activity host, String streamUrl, boolean newTask) {
+//        Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
+//        playbackIntent.putExtra("mediaUrl", streamUrl);
+//        if (newTask) {
+//            playbackIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//        }
+//        host.startActivity(playbackIntent);
+//    }
+//
+//    public static void startMediaPlayerActivity(Activity host, HLSStream stream) {
+//        Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
+//        Bundle extras = new Bundle();
+//        playbackIntent.putExtra("mediaUrl", stream.isLive()?stream.getLive():stream.getFull());
+//        extras.putSerializable("STREAM", stream);
+//        playbackIntent.putExtras(extras);
+//        host.startActivity(playbackIntent);
+//    }
 
     /**
      * Convenience method for attaching the current reverse geocoded device location to a given
