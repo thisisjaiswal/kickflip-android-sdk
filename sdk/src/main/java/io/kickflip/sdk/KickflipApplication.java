@@ -16,18 +16,17 @@ public class KickflipApplication {
     private static boolean initialized = false;
     private static Context mContext;
 
-    private static String ENDPOINT_KANVAS;
+    private static KickflipArguments arguments;
 
     private static StreamService streamService;
 
     private static void buildRestServices() {
-        ENDPOINT_KANVAS = instance().getResources().getString(R.string.kanvas_api);
         Gson gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
 
         RestAdapter kanvasAdapter = new RestAdapter.Builder()
-                .setEndpoint(ENDPOINT_KANVAS)
+                .setEndpoint(arguments.getStreamBaseURL())
                 .setLogLevel(RestAdapter.LogLevel.FULL)
                 .setConverter(new GsonConverter(gson))
                 .setRequestInterceptor(new KickflipInterceptor())
@@ -40,10 +39,11 @@ public class KickflipApplication {
         return mContext;
     }
 
-    public static void init(Context context) {
+    public static void init(Context context, KickflipArguments args) {
         if (initialized) return;
         initialized = true;
         mContext = context;
+        arguments = args;
         buildRestServices();
     }
 
