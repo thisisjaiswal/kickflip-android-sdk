@@ -37,24 +37,7 @@ import retrofit.client.Response;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static io.kickflip.sdk.Kickflip.isKitKat;
 
-/**
- * Broadcasts HLS video and audio to <a href="https://kickflip.io">Kickflip.io</a>.
- * The lifetime of this class correspond to a single broadcast. When performing multiple broadcasts,
- * ensure reference to only one {@link io.kickflip.sdk.av.Broadcaster} is held at any one time.
- * {@link io.kickflip.sdk.fragment.BroadcastFragment} illustrates how to use Broadcaster in this pattern.
- * <p/>
- * Example Usage:
- * <p/>
- * <ol>
- * <li>Construct {@link Broadcaster()} with your Kickflip.io Client ID and Secret</li>
- * <li>Call {@link Broadcaster#setPreviewDisplay(io.kickflip.sdk.view.GLCameraView)} to assign a
- * {@link io.kickflip.sdk.view.GLCameraView} for displaying the live Camera feed.</li>
- * <li>Call {@link io.kickflip.sdk.av.Broadcaster#startRecording()} to begin broadcasting</li>
- * <li>Call {@link io.kickflip.sdk.av.Broadcaster#stopRecording()} to end the broadcast.</li>
- * </ol>
- *
- * @hide
- */
+
 // TODO: Make HLS / RTMP Agnostic
 public class Broadcaster extends AVRecorder {
     private static final String TAG = "Broadcaster";
@@ -170,7 +153,7 @@ public class Broadcaster extends AVRecorder {
         mCamEncoder.requestThumbnailOnDeltaFrameWithScaling(10, 1);
         Log.i(TAG, "got StartStreamResponse");
         onGotStreamResponse(null);
-        KickflipApplication.getStreamService().startStream(bucketSession.getLid(), new BucketStart(true), new Callback<Object>() {
+        KickflipApplication.getCommunicator().hitStart(bucketSession.getLid(), new Callback<Object>() {
             @Override
             public void success(Object o, Response response) {
                 Log.w(TAG, "started stream!");
@@ -181,6 +164,17 @@ public class Broadcaster extends AVRecorder {
 
             }
         });
+//        KickflipApplication.getStreamService().startStream(bucketSession.getLid(), new BucketStart(true), new Callback<Object>() {
+//            @Override
+//            public void success(Object o, Response response) {
+//                Log.w(TAG, "started stream!");
+//            }
+//
+//            @Override
+//            public void failure(RetrofitError error) {
+//
+//            }
+//        });
     }
 
     private void onGotStreamResponse(HlsStream stream) {

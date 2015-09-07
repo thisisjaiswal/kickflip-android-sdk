@@ -5,13 +5,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import io.kickflip.sdk.glmagic.GLRenderable;
-import io.kickflip.sdk.glmagic.ViewToGLRenderer;
 
-public class GLDrawingView extends DrawingView implements GLRenderable {
+public class GLDrawingView extends DrawingViewLive implements GLRenderable {
 
     private TextureDrawer mTextureDrawer;
 

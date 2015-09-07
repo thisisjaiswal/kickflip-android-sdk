@@ -5,7 +5,7 @@ import android.graphics.Bitmap;
 import java.io.IOException;
 
 import io.kickflip.sdk.view.GLCameraView;
-import io.kickflip.sdk.view.drawing.DrawingView;
+import io.kickflip.sdk.view.drawing.DrawingViewLive;
 import io.kickflip.sdk.view.drawing.TextureDrawer;
 
 /**
@@ -58,7 +58,7 @@ public class AVRecorder {
         mCamEncoder.overlay(bitmap);
     }
 
-    public void setDrawingView(DrawingView drawingView) {
+    public void setDrawingView(DrawingViewLive drawingView) {
         mCamEncoder.setDrawingView(drawingView);
     }
 

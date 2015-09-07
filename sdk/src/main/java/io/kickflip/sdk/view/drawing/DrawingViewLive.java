@@ -25,7 +25,7 @@ import io.kickflip.sdk.helper.FilesHelper;
 import io.kickflip.sdk.helper.ResourcesHelper;
 
 
-public class DrawingView extends View {
+public class DrawingViewLive extends View {
     private static final String DRAWING = "drawing_%1$s";
     private Paint mPaint;
     private Paint mBitmapPaint;
@@ -78,15 +78,15 @@ public class DrawingView extends View {
         return mBitmap;
     }
 
-    public DrawingView(Context c) {
+    public DrawingViewLive(Context c) {
         super(c);
     }
 
-    public DrawingView(Context context, AttributeSet attributeSet) {
+    public DrawingViewLive(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
     }
 
-    public DrawingView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public DrawingViewLive(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
@@ -109,7 +109,7 @@ public class DrawingView extends View {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
-        mPaint.setStrokeWidth(20);
+        mPaint.setStrokeWidth(10);
         mPaint.setColor(0xFFFF0000);
 
         mBitmapPaint = new Paint();
@@ -275,6 +275,7 @@ public class DrawingView extends View {
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        Log.w("BroadcastFragment", "onTouch drawingView");
         float x = event.getX();
         float y = event.getY();
 

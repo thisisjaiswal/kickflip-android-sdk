@@ -154,7 +154,7 @@ public class S3BroadcastManager implements Runnable {
 
     private void hitDone() {
         mBroadcaster.goOffline();
-        KickflipApplication.getStreamService().finishStream(lid, new BucketDone(true), new Callback<Object>() {
+        KickflipApplication.getCommunicator().hitDone(lid, new Callback<Object>() {
             @Override
             public void success(Object o, Response response) {
                 Log.w(TAG, "done hit right!");
@@ -165,5 +165,16 @@ public class S3BroadcastManager implements Runnable {
                 Log.w(TAG, "error hitting done!");
             }
         });
+//        KickflipApplication.getStreamService().finishStream(lid, new BucketDone(true), new Callback<Object>() {
+//            @Override
+//            public void success(Object o, Response response) {
+//                Log.w(TAG, "done hit right!");
+//            }
+//
+//            @Override
+//            public void failure(RetrofitError error) {
+//                Log.w(TAG, "error hitting done!");
+//            }
+//        });
     }
 }

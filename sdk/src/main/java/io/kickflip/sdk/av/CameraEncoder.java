@@ -25,7 +25,7 @@ import java.util.List;
 import io.kickflip.sdk.event.CameraOpenedEvent;
 import io.kickflip.sdk.view.GLCameraEncoderView;
 import io.kickflip.sdk.view.GLCameraView;
-import io.kickflip.sdk.view.drawing.DrawingView;
+import io.kickflip.sdk.view.drawing.DrawingViewLive;
 import io.kickflip.sdk.view.drawing.TextureDrawer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -102,7 +102,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     private GLSurfaceView mDisplayView;
     private CameraSurfaceRenderer mDisplayRenderer;
-    private DrawingView drawingView;
+    private DrawingViewLive drawingView;
 
     private int mCurrentCamera;
     private int mDesiredCamera;
@@ -658,7 +658,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mDisplayRenderer.overlay(bitmap);
     }
 
-    public void setDrawingView(DrawingView drawingView) {
+    public void setDrawingView(DrawingViewLive drawingView) {
 //        mDisplayRenderer.setDrawingProvider(drawingProvider);
         this.drawingView = drawingView;
     }

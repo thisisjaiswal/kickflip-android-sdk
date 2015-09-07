@@ -2,13 +2,13 @@ package io.kickflip.sdk;
 
 public class KickflipArguments {
 
-    private String streamBaseURL;
+    private Communicator communicator;
 
-    public KickflipArguments(String streamBaseURL) {
-        this.streamBaseURL = streamBaseURL;
+    public KickflipArguments(Communicator communicator) {
+        this.communicator = communicator;
     }
 
-    public String getStreamBaseURL() {
-        return streamBaseURL;
+    public Communicator getCommunicator() {
+        return communicator;
     }
 }

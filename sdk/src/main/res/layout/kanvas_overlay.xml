@@ -5,7 +5,7 @@
 
     <view
         android:id="@+id/kanvas_overlay_drawing_view"
-        class="io.kickflip.sdk.view.drawing.DrawingView"
+        class="io.kickflip.sdk.view.drawing.DrawingViewLive"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="40dp" />

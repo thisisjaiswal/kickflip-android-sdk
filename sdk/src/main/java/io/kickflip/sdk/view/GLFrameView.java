@@ -52,8 +52,7 @@ public class GLFrameView extends FrameLayout implements GLRenderable {
             glAttachedCanvas.scale(xScale, xScale);
             glAttachedCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
             super.dispatchDraw(glAttachedCanvas);
+            mTextureDrawer.finishDraw(glAttachedCanvas);
         }
-
-        mTextureDrawer.finishDraw(glAttachedCanvas);
     }
 }
