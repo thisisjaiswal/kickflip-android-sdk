@@ -70,6 +70,30 @@ public class Util {
         return config;
     }
 
+    public static SessionConfig createCustomHLSSessionConfig(Context context) {
+        HashMap<String, String> extraData = new HashMap<>();
+        extraData.put("key", "value");
+
+        String outputPath = new File(context.getFilesDir(), "index.m3u8").getAbsolutePath();
+        // Note SessionConfig actually places each recording in a unique folder
+        // e.g: if you pass /sdcard/test/index.m3u8, your recording will be in
+        //                  /sdcard/test/<some-uuid>/index.m3u8
+        // You can query the actual output file location with SessionConfig#getOutputPath() or the containing directory
+        // with SessionConfig#getOutputDirectory() after construction.
+        SessionConfig config = new SessionConfig.Builder(outputPath)
+                .withTitle(Util.getHumanDateString())
+                .withDescription("A live stream!")
+                .withAdaptiveStreaming(true)
+                .withVideoResolution(480, 720)
+                .withVideoBitrate(1 * 1000 * 1000)
+                .withAudioBitrate(192 * 1000)
+                .withExtraInfo(extraData)
+                .withPrivateVisibility(false)
+                .withLocation(true)
+                .build();
+        return config;
+    }
+
     /**
      * Create a {@link io.kickflip.sdk.av.SessionConfig}
      * corresponding to a 420p video stream
@@ -77,14 +101,14 @@ public class Util {
      * @param context the host application Context. Used to access Internal Storage
      * @return the resulting SessionConfig
      */
-    public static SessionConfig create420pSessionConfig(Context context, String targer) {
+    public static SessionConfig create420pSessionConfig(Context context) {
         String outputPath = new File(context.getFilesDir(), "index.m3u8").getAbsolutePath();
         SessionConfig config = new SessionConfig.Builder(outputPath)
                 .withTitle(Util.getHumanDateString())
                 .withVideoBitrate(1 * 1000 * 1000)
                 .withPrivateVisibility(false)
                 .withLocation(true)
-                .withVideoResolution(720, 480)
+                .withVideoResolution(480, 720)
                 .build();
         return config;
     }
