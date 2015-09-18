@@ -8,7 +8,6 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -24,7 +23,6 @@ import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.event.StreamLocationAddedEvent;
 import io.kickflip.sdk.location.DeviceLocation;
 import io.kickflip.sdk.model.BucketSession;
-import io.kickflip.sdk.model.HLSStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
