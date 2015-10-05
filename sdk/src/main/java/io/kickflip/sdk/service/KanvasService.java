@@ -6,6 +6,7 @@ import io.kickflip.sdk.model.BucketDone;
 import io.kickflip.sdk.model.BucketSession;
 import io.kickflip.sdk.model.BucketStart;
 import io.kickflip.sdk.model.HLSStream;
+import io.kickflip.sdk.model.MultipleShareObject;
 import io.kickflip.sdk.model.kanvas_live.ChatMessage;
 import io.kickflip.sdk.model.kanvas_live.ChatMessages;
 import retrofit.Callback;
@@ -20,7 +21,7 @@ public interface KanvasService {
     @GET("/live")
     public void getSession(Callback<BucketSession> cb);
 
-//    Gives you 20 streams
+    //    Gives you 20 streams
     @GET("/live/top")
     public void getTopStreams(Callback<List<HLSStream>> cb);
 
@@ -35,4 +36,9 @@ public interface KanvasService {
 
     @POST("/live/{lid}/chat")
     public void sendMessage(@Path("lid") String lid, @Body ChatMessage chatMessage, Callback<ChatMessage> cb);
+
+    @GET("/entries/{eid}/short_share_url")
+    public void getShareInfo(@Path("eid") String eid, Callback<MultipleShareObject> cb);
 }
+
+
