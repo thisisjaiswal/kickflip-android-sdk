@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import io.kickflip.sdk.KickflipApplication;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.event.S3UploadEvent;
-import io.kickflip.sdk.model.BucketDone;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;

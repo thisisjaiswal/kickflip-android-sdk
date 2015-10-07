@@ -10,10 +10,7 @@ import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.exception.KickflipException;
 import io.kickflip.sdk.fragment.GlassBroadcastFragment;
 
-/**
- * BroadcastActivity manages a single live broadcast. It's a thin wrapper around {@link io.kickflip.sdk.fragment.BroadcastFragment}
- */
-public class GlassBroadcastActivity extends ImmersiveActivity implements BroadcastListener{
+public class GlassBroadcastActivity extends ImmersiveActivity implements BroadcastListener {
     private static final String TAG = "GlassBroadcastActivity";
 
     private GlassBroadcastFragment mFragment;

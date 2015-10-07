@@ -29,7 +29,6 @@ import io.kickflip.sdk.event.S3UploadEvent;
 import io.kickflip.sdk.event.ThumbnailWrittenEvent;
 import io.kickflip.sdk.model.BucketCredentials;
 import io.kickflip.sdk.model.BucketSession;
-import io.kickflip.sdk.model.BucketStart;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
@@ -153,6 +152,9 @@ public class Broadcaster extends AVRecorder {
         mCamEncoder.requestThumbnailOnDeltaFrameWithScaling(10, 1);
         Log.i(TAG, "got StartStreamResponse");
         onGotStreamResponse(null);
+        if (mBroadcastListener != null) {
+            mBroadcastListener.onBroadcastStart();
+        }
         KickflipApplication.getCommunicator().hitStart(bucketSession.getLid(), new Callback<Object>() {
             @Override
             public void success(Object o, Response response) {
@@ -191,9 +193,6 @@ public class Broadcaster extends AVRecorder {
         mReadyToBroadcast = true;
         submitQueuedUploadsToS3();
         mEventBus.post(new BroadcastIsBufferingEvent());
-        if (mBroadcastListener != null) {
-            mBroadcastListener.onBroadcastStart();
-        }
     }
 
     /**
@@ -214,6 +213,7 @@ public class Broadcaster extends AVRecorder {
     public void stopRecording() {
         super.stopRecording();
         mSentBroadcastLiveEvent = false;
+        if (mBroadcastListener != null) mBroadcastListener.onBroadcastStop();
     }
 
     public boolean firstSegmentUploaded() {
