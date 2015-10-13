@@ -2,31 +2,31 @@ package io.kickflip.sdk.model;
 
 public class BucketCredentials {
 
-    private String accessKey;
-    private String secretKey;
-    private String sessionToken;
+    private String access_key;
+    private String secret_key;
+    private String session_token;
 
     public String getAccessKey() {
-        return accessKey;
+        return access_key;
     }
 
     public String getSecretKey() {
-        return secretKey;
+        return secret_key;
     }
 
     public String getSessionToken() {
-        return sessionToken;
+        return session_token;
     }
 
     @Override
     public String toString() {
         StringBuilder ans = new StringBuilder();
 
-        ans.append(accessKey);
+        ans.append(access_key);
         ans.append('\n');
-        ans.append(secretKey);
+        ans.append(secret_key);
         ans.append('\n');
-        ans.append(sessionToken);
+        ans.append(session_token);
         ans.append('\n');
 
         return ans.toString();
