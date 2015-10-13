@@ -34,6 +34,7 @@ public class Kickflip {
     // Per-Stream settings
     private static SessionConfig sSessionConfig;          // Absolute path to root storage location
     private static BroadcastListener sBroadcastListener;
+    private static String streamName;
 
     /**
      * Register with Kickflip, creating a single new user identity per app installation.
@@ -206,6 +207,14 @@ public class Kickflip {
     public static String getStreamIdFromKickflipUrl(Uri uri) {
         if (uri == null) throw new IllegalArgumentException("uri cannot be null");
         return uri.getLastPathSegment().toString();
+    }
+
+    public static String getStreamName() {
+        return streamName;
+    }
+
+    public static void setStreamName(String name) {
+        streamName = name;
     }
 
     private static void setupDefaultSessionConfig() {
