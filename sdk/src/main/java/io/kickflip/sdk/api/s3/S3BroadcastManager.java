@@ -133,11 +133,12 @@ public class S3BroadcastManager implements Runnable {
                         Log.i(TAG, "Upload complete.");
                     else if (VERBOSE)
                         Log.i(TAG, "Last Upload complete.");
-                    if (lastUploadComplete)
+                    if (lastUploadComplete && mBroadcaster.isLive())
                         hitDone();
                 } else {
                     if (VERBOSE)
                         Log.e(TAG, "Reached end of Queue before processing last segment!");
+                    if (mBroadcaster.isLive()) hitDone();
                     lastUploadComplete = true;
                 }
             } catch (InterruptedException e) {
@@ -156,7 +157,7 @@ public class S3BroadcastManager implements Runnable {
         KickflipApplication.getCommunicator().hitDone(lid, new Callback<Object>() {
             @Override
             public void success(Object o, Response response) {
-                Log.w(TAG, "done hit right!");
+                Log.w(TAG, "done hit right!\n" + ((response != null) ? response.toString():null));
             }
 
             @Override
