@@ -11,26 +11,22 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import io.kickflip.sdk.api.KickflipApiClient;
-
-import static io.kickflip.sdk.Kickflip.isKickflipUrl;
-
 /**
  * Created by David Brodsky on 4/8/14.
+ *
  * @hide
  */
 public class M3u8Parser {
     public static final String TAG = "M3u8Parser";
 
-    public interface M3u8ParserCallback{
+    public interface M3u8ParserCallback {
         public void onSuccess(Playlist playlist);
+
         public void onError(Exception e);
     }
 
-    public static void getM3u8FromUrl(KickflipApiClient kickflip, String url, final M3u8ParserCallback cb) {
-        if (isKickflipUrl(Uri.parse(url))) {
-
-        } else if(url.substring(url.lastIndexOf(".")+1).equals("m3u8")) {
+    public static void getM3u8FromUrl(String url, final M3u8ParserCallback cb) {
+        if (url.substring(url.lastIndexOf(".") + 1).equals("m3u8")) {
             parseM3u8(url, cb);
         } else {
             throw new IllegalArgumentException("Url is not an .m3u8 or kickflip.io url");
@@ -49,14 +45,14 @@ public class M3u8Parser {
                     connection.connect();
 
                     if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                        String errorMessage =  "Server returned HTTP " + connection.getResponseCode()
+                        String errorMessage = "Server returned HTTP " + connection.getResponseCode()
                                 + " " + connection.getResponseMessage();
                         Log.e(TAG, errorMessage);
                         cb.onError(new IOException(errorMessage));
                         return null;
                     }
 
-                    Playlist playlist =  Playlist.parse(connection.getInputStream());
+                    Playlist playlist = Playlist.parse(connection.getInputStream());
                     if (playlist != null) {
                         return playlist;
                     } else {

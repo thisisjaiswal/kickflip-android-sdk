@@ -8,7 +8,6 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.common.eventbus.EventBus;
@@ -16,7 +15,6 @@ import com.google.common.eventbus.EventBus;
 import java.io.File;
 import java.io.IOException;
 
-import io.kickflip.sdk.activity.GlassBroadcastActivity;
 import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
@@ -41,7 +39,7 @@ public class Kickflip {
      *
      * @param context the host application's {@link android.content.Context}
      */
-    public static void setup(@NonNull Context context) {
+    public static void setup(Context context) {
         sContext = context;
     }
 
@@ -66,35 +64,16 @@ public class Kickflip {
     }
 
     public static void startGlassBroadcastActivity(Activity host, BroadcastListener listener) {
-        checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
-        if (sSessionConfig == null) {
-            setupDefaultSessionConfig();
-        }
-        sBroadcastListener = listener;
-        Log.i(TAG, "startGlassBA ready? " + readyToBroadcast());
-        Intent broadcastIntent = new Intent(host, GlassBroadcastActivity.class);
-        broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        host.startActivity(broadcastIntent);
-    }
-
-
-//    public static void startMediaPlayerActivity(Activity host, String streamUrl, boolean newTask) {
-//        Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
-//        playbackIntent.putExtra("mediaUrl", streamUrl);
-//        if (newTask) {
-//            playbackIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//        checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
+//        if (sSessionConfig == null) {
+//            setupDefaultSessionConfig();
 //        }
-//        host.startActivity(playbackIntent);
-//    }
-//
-//    public static void startMediaPlayerActivity(Activity host, HLSStream stream) {
-//        Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
-//        Bundle extras = new Bundle();
-//        playbackIntent.putExtra("mediaUrl", stream.isLive()?stream.getLive():stream.getFull());
-//        extras.putSerializable("STREAM", stream);
-//        playbackIntent.putExtras(extras);
-//        host.startActivity(playbackIntent);
-//    }
+//        sBroadcastListener = listener;
+//        Log.i(TAG, "startGlassBA ready? " + readyToBroadcast());
+//        Intent broadcastIntent = new Intent(host, GlassBroadcastActivity.class);
+//        broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//        host.startActivity(broadcastIntent);
+    }
 
     /**
      * Convenience method for attaching the current reverse geocoded device location to a given
