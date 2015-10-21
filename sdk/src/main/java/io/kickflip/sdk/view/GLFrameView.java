@@ -17,6 +17,8 @@ import io.kickflip.sdk.view.drawing.TextureDrawer;
 public class GLFrameView extends FrameLayout implements GLRenderable {
 
     private TextureDrawer mTextureDrawer;
+    private boolean shouldDrawOnTexture;
+    private boolean shouldDrawOnScreen;
 
     public GLFrameView(Context c) {
         super(c);
@@ -51,8 +53,37 @@ public class GLFrameView extends FrameLayout implements GLRenderable {
             float xScale = glAttachedCanvas.getWidth() / (float)canvas.getWidth();
             glAttachedCanvas.scale(xScale, xScale);
             glAttachedCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
-            super.dispatchDraw(glAttachedCanvas);
+
+            if (shouldDrawOnTexture) {
+                beforeTextureDraw();
+                super.dispatchDraw(glAttachedCanvas);
+                afterTextureDraw();
+            }
+
+            if (shouldDrawOnScreen) {
+                beforeScreenDraw();
+                super.dispatchDraw(canvas);
+                afterScreenDraw();
+            }
+
             mTextureDrawer.finishDraw(glAttachedCanvas);
         }
+    }
+
+    public void shouldDrawOnTexture(boolean shouldDrawOnTexture) {
+        this.shouldDrawOnTexture = shouldDrawOnTexture;
+    }
+
+    public void shouldDrawOnScreen(boolean shouldDrawOnScreen) {
+        this.shouldDrawOnScreen = shouldDrawOnScreen;
+    }
+
+    protected void beforeScreenDraw() {
+    }
+    protected void afterScreenDraw() {
+    }
+    protected void beforeTextureDraw() {
+    }
+    protected void afterTextureDraw() {
     }
 }
