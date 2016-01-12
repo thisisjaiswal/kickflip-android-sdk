@@ -73,12 +73,13 @@ public class Broadcaster extends AVRecorder {
      */
     public Broadcaster(Context context, SessionConfig config, BucketSession bucketSession) throws IOException {
         super(config);
-        checkNotNull(bucketSession);
         init();
         mContext = context;
         mConfig = config;
-        this.bucketSession = bucketSession;
-        this.bucketCredentials = bucketSession.getCred();
+        if (bucketSession != null) {
+            this.bucketSession = bucketSession;
+            this.bucketCredentials = bucketSession.getCred();
+        }
         mConfig.getMuxer().setEventBus(mEventBus);
         mVideoBitrate = mConfig.getVideoBitrate();
         if (VERBOSE) Log.i(TAG, "Initial video bitrate : " + mVideoBitrate);
@@ -90,6 +91,11 @@ public class Broadcaster extends AVRecorder {
 
         mReadyToBroadcast = false;
         Kickflip.setup(context);
+    }
+
+    public void setBucketSession(BucketSession bucketSession) {
+        this.bucketSession = bucketSession;
+        this.bucketCredentials = bucketSession.getCred();
     }
 
     private void init() {
@@ -148,6 +154,7 @@ public class Broadcaster extends AVRecorder {
     @Override
     public void startRecording() {
         super.startRecording();
+        if (bucketSession == null || bucketCredentials == null) throw new IllegalStateException("No credentials available!");
         isRecording = true;
         mCamEncoder.requestThumbnailOnDeltaFrameWithScaling(10, 1);
         Log.i(TAG, "got StartStreamResponse");

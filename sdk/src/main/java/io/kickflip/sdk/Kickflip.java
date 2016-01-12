@@ -53,7 +53,6 @@ public class Kickflip {
 
     public static void startBroadcastActivity(Activity host, BroadcastListener listener, Class activityClass) {
         checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
-        checkNotNull(sBucketSession);
         if (sSessionConfig == null) {
             setupDefaultSessionConfig();
         }
