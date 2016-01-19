@@ -123,7 +123,7 @@ public class S3BroadcastManager implements Runnable {
         boolean lastUploadComplete = false;
         while (!lastUploadComplete) {
             try {
-                Pair<PutObjectRequest, Boolean> requestPair = mQueue.poll(mBroadcaster.getSessionConfig().getHlsSegmentDuration() * 2, TimeUnit.SECONDS);
+                Pair<PutObjectRequest, Boolean> requestPair = mQueue.poll(mBroadcaster.getSessionConfig().getHlsSegmentDuration() * 3, TimeUnit.SECONDS);
                 if (requestPair != null) {
                     final PutObjectRequest request = requestPair.first;
                     Upload upload = mTransferManager.upload(request);

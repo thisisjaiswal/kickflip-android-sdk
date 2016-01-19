@@ -273,25 +273,64 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private static void choosePreviewSize(Camera.Parameters parms, int width, int height) {
         // We should make sure that the requested MPEG size is less than the preferred
         // size, and has the same aspect ratio.
-        Camera.Size ppsfv = parms.getPreferredPreviewSizeForVideo();
-        if (ppsfv != null && VERBOSE) {
-            Log.d(TAG, "Camera preferred preview size for video is " +
-                    ppsfv.width + "x" + ppsfv.height);
-        }
 
-        for (Camera.Size size : parms.getSupportedPreviewSizes()) {
-            if (size.width == width && size.height == height) {
-                parms.setPreviewSize(width, height);
-                return;
+
+//        Camera.Size ppsfv = parms.getPreferredPreviewSizeForVideo();
+//        if (ppsfv != null && VERBOSE) {
+//            Log.d(TAG, "Camera preferred preview size for video is " +
+//                    ppsfv.width + "x" + ppsfv.height);
+//        }
+//
+//        for (Camera.Size size : parms.getSupportedPreviewSizes()) {
+//            if (size.width == width && size.height == height) {
+//                parms.setPreviewSize(width, height);
+//                return;
+//            }
+//        }
+//
+//        Log.w(TAG, "Unable to set preview size to " + width + "x" + height);
+//        if (ppsfv != null) {
+//            parms.setPreviewSize(ppsfv.width, ppsfv.height);
+//        }
+
+        Camera.Size optimalSize = getOptimalPreviewSize(parms.getSupportedPreviewSizes(), width, height);
+        parms.setPreviewSize(optimalSize.width, optimalSize.height);
+
+        // else use whatever the default size is
+    }
+
+    private static Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio=(double)h / w;
+
+        if (sizes == null) return null;
+
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+
+        int targetHeight = h;
+
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(size.height - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - targetHeight);
             }
         }
 
-        Log.w(TAG, "Unable to set preview size to " + width + "x" + height);
-        if (ppsfv != null) {
-            parms.setPreviewSize(ppsfv.width, ppsfv.height);
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - targetHeight) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - targetHeight);
+                }
+            }
         }
-        // else use whatever the default size is
+        return optimalSize;
     }
+
 
     public void adjustBitrate(int targetBitrate) {
         mVideoEncoder.adjustBitrate(targetBitrate);

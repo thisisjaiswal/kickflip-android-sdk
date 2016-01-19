@@ -19,6 +19,8 @@ package net.openwatch.ffmpegwrapper;
 
 import java.nio.ByteBuffer;
 
+import io.kickflip.sdk.Constants;
+
 /**
  * A wrapper around the FFmpeg C libraries
  * designed for muxing encoded AV packets
@@ -64,7 +66,7 @@ public class FFmpegWrapper {
         public int numAudioChannels = 1;
 
         // Format specific options
-        public int hlsSegmentDurationSec = 5;
+        public int hlsSegmentDurationSec = Constants.HLS_SEGMENT_DURATION;
 
         public String outputFormatName = "hls";
         // TODO: Provide a Map for format-specific options

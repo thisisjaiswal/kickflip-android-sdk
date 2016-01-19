@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.UUID;
 
+import io.kickflip.sdk.Constants;
 import io.kickflip.sdk.api.json.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -276,7 +277,7 @@ public class SessionConfig {
             mAttachLocation = false;
             mAdaptiveStreaming = isKitKat();
             mConvertVerticalVideo = true;
-            mHlsSegmentDuration = 5;
+            mHlsSegmentDuration = Constants.HLS_SEGMENT_DURATION;
         }
 
         public Builder withMuxer(Muxer muxer) {
