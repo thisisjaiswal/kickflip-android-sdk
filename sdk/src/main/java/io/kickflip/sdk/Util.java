@@ -83,7 +83,7 @@ public class Util {
         SessionConfig config = new SessionConfig.Builder(outputPath)
                 .withTitle(Util.getHumanDateString())
                 .withDescription("A live stream!")
-                .withAdaptiveStreaming(true)
+                .withAdaptiveStreaming(false)
                 .withVideoResolution(480, 720)
                 .withVideoBitrate(1 * 1000 * 1000)
                 .withAudioBitrate(192 * 1000)
