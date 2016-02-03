@@ -294,6 +294,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 //        }
 
         Camera.Size optimalSize = getOptimalPreviewSize(parms.getSupportedPreviewSizes(), width, height);
+        Log.e("KANVAS", "DESIRED " + optimalSize.width + "x" + optimalSize.height);
         parms.setPreviewSize(optimalSize.width, optimalSize.height);
 
         // else use whatever the default size is
@@ -867,6 +868,45 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         }
     }
 
+    private int getRotation(int cameraId) {
+        int displayRotation;
+        // FIXME
+        // It would be better to get the device orientation here
+        // Because the app only works on portrait, then is fine to use rotation=0
+        //Display display = ((WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+
+        // TAKE CARE OF ROTATION (NEXUS6)
+
+//        int degrees = 0;
+//        switch (display.getRotation()) {
+//            case Surface.ROTATION_0:
+//                degrees = 0;
+//                break;
+//            case Surface.ROTATION_90:
+//                degrees = 90;
+//                break;
+//            case Surface.ROTATION_180:
+//                degrees = 180;
+//                break;
+//            case Surface.ROTATION_270:
+//                degrees = 270;
+//                break;
+//        }
+        int degrees = 0;
+
+        android.hardware.Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
+        android.hardware.Camera.getCameraInfo(cameraId, info);
+
+        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            displayRotation = (info.orientation + degrees) % 360;
+            displayRotation = (360 - displayRotation) % 360;  // compensate the mirror
+        } else {  // back-facing
+            displayRotation = (info.orientation - degrees + 360) % 360;
+        }
+        return displayRotation;
+    }
+
+
     /**
      * Opens a camera, and attempts to establish preview mode at the specified width and height.
      */
@@ -884,6 +924,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         int numCameras = Camera.getNumberOfCameras();
         int targetCameraType = requestedCameraType;
         boolean triedAllCameras = false;
+        int cameraId = 0;
         cameraLoop:
         while (!triedAllCameras) {
             for (int i = 0; i < numCameras; i++) {
@@ -891,6 +932,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 if (info.facing == targetCameraType) {
                     mCamera = Camera.open(i);
                     mCurrentCamera = targetCameraType;
+                    cameraId = i;
                     break cameraLoop;
                 }
             }
@@ -909,7 +951,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         }
 
         Camera.Parameters parms = mCamera.getParameters();
-        mCamera.setDisplayOrientation(90);
+        mCamera.setDisplayOrientation(getRotation(cameraId));
 
         postCameraOpenedEvent(parms);
 
@@ -940,7 +982,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         if (maxFpsRange != null) {
             parms.setPreviewFpsRange(maxFpsRange[0], maxFpsRange[1]);
         }
-
+        Log.e("KANVAS", "DESIRED " + desiredWidth + "x" + desiredHeight);
         choosePreviewSize(parms, desiredWidth, desiredHeight);
         // leave the frame rate set to default
         mCamera.setParameters(parms);

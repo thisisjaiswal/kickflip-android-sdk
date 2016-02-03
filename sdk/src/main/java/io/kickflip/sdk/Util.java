@@ -70,7 +70,7 @@ public class Util {
         return config;
     }
 
-    public static SessionConfig createCustomHLSSessionConfig(Context context) {
+    public static SessionConfig createCustomHLSSessionConfig(Context context, int width, int height) {
         HashMap<String, String> extraData = new HashMap<>();
         extraData.put("key", "value");
 
@@ -84,7 +84,7 @@ public class Util {
                 .withTitle(Util.getHumanDateString())
                 .withDescription("A live stream!")
                 .withAdaptiveStreaming(false)
-                .withVideoResolution(480, 720)
+                .withVideoResolution(width, height)
                 .withVideoBitrate(1 * 1000 * 1000)
                 .withAudioBitrate(192 * 1000)
                 .withExtraInfo(extraData)
