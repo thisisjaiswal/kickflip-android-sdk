@@ -1,6 +1,8 @@
 package io.kickflip.sdk.model;
 
-public class BucketSession {
+import java.io.Serializable;
+
+public class BucketSession implements Serializable {
 
     private String lid;
     private BucketCredentials cred;
