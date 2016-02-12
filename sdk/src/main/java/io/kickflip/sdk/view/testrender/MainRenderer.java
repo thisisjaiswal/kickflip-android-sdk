@@ -1,33 +1,24 @@
 package io.kickflip.sdk.view.testrender;
 
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLUtils;
-import android.os.Handler;
 import android.util.Log;
 import android.view.Surface;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import io.kickflip.sdk.KickflipApplication;
-import io.kickflip.sdk.R;
 import io.kickflip.sdk.av.GlUtil;
-import io.kickflip.sdk.view.drawing.TextureDrawer;
+import io.kickflip.sdk.view.TextureDrawer;
 
 // Renderer
 public class MainRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener, TextureDrawer {

@@ -1,4 +1,4 @@
-package io.kickflip.sdk.view.drawing;
+package io.kickflip.sdk.view;
 
 import android.graphics.Canvas;
 

@@ -18,7 +18,7 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import io.kickflip.sdk.view.drawing.TextureDrawer;
+import io.kickflip.sdk.view.TextureDrawer;
 
 /**
  * @hide

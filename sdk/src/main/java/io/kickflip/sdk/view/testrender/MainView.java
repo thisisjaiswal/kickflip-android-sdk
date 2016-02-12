@@ -7,7 +7,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-import io.kickflip.sdk.view.drawing.TextureDrawer;
+import io.kickflip.sdk.view.TextureDrawer;
 
 public class MainView extends GLSurfaceView {
     public MainRenderer mRenderer;

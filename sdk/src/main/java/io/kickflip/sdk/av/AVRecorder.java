@@ -5,8 +5,7 @@ import android.graphics.Bitmap;
 import java.io.IOException;
 
 import io.kickflip.sdk.view.GLCameraView;
-import io.kickflip.sdk.view.drawing.DrawingViewLive;
-import io.kickflip.sdk.view.drawing.TextureDrawer;
+import io.kickflip.sdk.view.TextureDrawer;
 
 /**
  * Records an Audio / Video stream to disk.
@@ -56,10 +55,6 @@ public class AVRecorder {
 
     public void overlay(Bitmap bitmap) {
         mCamEncoder.overlay(bitmap);
-    }
-
-    public void setDrawingView(DrawingViewLive drawingView) {
-        mCamEncoder.setDrawingView(drawingView);
     }
 
     public void applyFilter(int filter){

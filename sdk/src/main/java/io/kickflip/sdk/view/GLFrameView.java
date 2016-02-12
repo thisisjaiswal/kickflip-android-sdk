@@ -2,14 +2,12 @@ package io.kickflip.sdk.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
 
-import io.kickflip.sdk.glmagic.GLRenderable;
-import io.kickflip.sdk.view.drawing.TextureDrawer;
+import io.kickflip.sdk.gl_interfaces.GLRenderable;
 
 /**
  * Created by framundo on 8/24/15.
