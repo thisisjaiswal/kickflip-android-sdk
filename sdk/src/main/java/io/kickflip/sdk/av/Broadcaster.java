@@ -267,7 +267,9 @@ public class Broadcaster extends AVRecorder {
                 region,
                 bucket,
                 fullKey,
-                file);
+                file,
+                lastUpload,
+                getLid());
     }
 
     public SessionConfig getSessionConfig() {

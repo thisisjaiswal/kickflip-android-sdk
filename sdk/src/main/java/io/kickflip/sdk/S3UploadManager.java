@@ -10,5 +10,7 @@ public interface S3UploadManager {
                               String region,
                               String bucket,
                               String key,
-                              File file);
+                              File file,
+                              boolean isLastUpload,
+                              String lid);
 }
