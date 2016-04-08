@@ -729,6 +729,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 // We're hot-swapping the display EGLContext after
                 // creating the initial SurfaceTexture for camera display
 //                mInputWindowSurface.makeCurrent();
+                mSurfaceTexture.release(); // Kanvas: Possible fix to https://fabric.io/kanvas-android/android/apps/com.kanvas.android/issues/56f4ebc6ffcdc042501fd689
                 mSurfaceTexture.detachFromGLContext();
                 // Release the EGLSurface and EGLContext.
                 mInputWindowSurface.releaseEglSurface();
