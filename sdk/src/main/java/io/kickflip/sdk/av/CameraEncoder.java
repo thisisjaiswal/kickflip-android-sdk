@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import io.kickflip.sdk.KickflipEventListener;
+import io.kickflip.sdk.KickflipApplication;
 import io.kickflip.sdk.event.CameraOpenedEvent;
 import io.kickflip.sdk.view.GLCameraEncoderView;
 import io.kickflip.sdk.view.GLCameraView;
@@ -426,7 +428,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      */
     public void startRecording() {
         if (mState != STATE.INITIALIZED) {
-            Log.e(TAG, "startRecording called in invalid state. Ignoring");
+            Log.w(TAG, "startRecording called in invalid state. Ignoring");
             return;
         }
         synchronized (mReadyForFrameFence) {
@@ -503,8 +505,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     }
 
     private void handleRelease() {
-        if (mState != STATE.RELEASING)
-            throw new IllegalArgumentException("handleRelease called in invalid state");
+        if (mState != STATE.RELEASING) {
+            reportError(new IllegalArgumentException("handleRelease called in invalid state"));
+            return;
+        }
         Log.i(TAG, "handleRelease");
         shutdown();
         mState = STATE.RELEASED;
@@ -764,7 +768,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mTextureId = textureId;
                 mSurfaceTexture = new SurfaceTexture(mTextureId);
                 if (VERBOSE)
-                    Log.i(TAG + "-SurfaceTexture", " SurfaceTexture created. pre setOnFrameAvailableListener");
+                    Log.i(TAG, " SurfaceTexture created. pre setOnFrameAvailableListener");
                 mSurfaceTexture.setOnFrameAvailableListener(this);
                 openAndAttachCameraToSurfaceTexture();
                 mReadyForFrames = true;
@@ -850,15 +854,17 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     }
 
     private void openAndAttachCameraToSurfaceTexture() {
-        openCamera(mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight(), mDesiredCamera);
         try {
+            openCamera(mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight(), mDesiredCamera);
             mCamera.setPreviewTexture(mSurfaceTexture);
             mCamera.startPreview();
             if (VERBOSE)
                 Log.i("CameraRelease", "Opened / Started Camera preview. mDisplayView ready? " + (mDisplayView == null ? " no" : " yes"));
             if (mDisplayView != null) configureDisplayView();
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // A RuntimeException may be thrown if the Camera was in use by another process
             e.printStackTrace();
+            reportError(e);
         }
     }
 
@@ -904,12 +910,12 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     /**
      * Opens a camera, and attempts to establish preview mode at the specified width and height.
      */
-    private void openCamera(int desiredWidth, int desiredHeight, int requestedCameraType) {
+    private void openCamera(int desiredWidth, int desiredHeight, int requestedCameraType) throws RuntimeException {
         // There's a confusing conflation of Camera index in Camera.open(i)
         // with Camera.getCameraInfo().facing values. However the API specifies that Camera.open(0)
         // will always be a rear-facing camera, and CAMERA_FACING_BACK = 0.
         if (mCamera != null) {
-            throw new RuntimeException("camera already initialized");
+            releaseCamera();
         }
 
         Camera.CameraInfo info = new Camera.CameraInfo();
@@ -924,6 +930,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             for (int i = 0; i < numCameras; i++) {
                 Camera.getCameraInfo(i, info);
                 if (info.facing == targetCameraType) {
+                    // The following line may throw a RuntimeException if the camera wasn't released
+                    // before or was currently in use by another process
                     mCamera = Camera.open(i);
                     mCurrentCamera = targetCameraType;
                     cameraId = i;
@@ -1084,6 +1092,11 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             } catch (IOException e) {
                 Log.e(TAG, "Unable to reset! Could be trouble creating MediaCodec encoder");
                 e.printStackTrace();
+                encoder.reportError(e);
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Probably an error with OpenGl or the Camera was in use by another process");
+                e.printStackTrace();
+                encoder.reportError(e);
             }
         }
     }
@@ -1180,5 +1193,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     public void setEventBus(EventBus eventBus) {
         mEventBus = eventBus;
+    }
+
+    private void reportError(Exception e) {
+        KickflipEventListener kickflipEventListener = KickflipApplication.getKickflipEventListener();
+        if (kickflipEventListener != null) kickflipEventListener.onKickflipError(e);
     }
 }
